@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react'
-import { useControls, buttonGroup } from 'leva'
+import { useControls } from 'leva'
 import { Caisson } from './Caisson'
 
 export function Parent() {
@@ -10,27 +10,37 @@ export function Parent() {
   const hauteursRef = useRef(hauteurs)
   hauteursRef.current = hauteurs
 
-  // 1. NOUVEAU : Ajout de la couleur dans les contrôles globaux
-  const { largeurTotaleCM, couleurMeuble } = useControls('Configuration Globale', {
-    largeurTotaleCM: { value: 60, min: 30, max: 320, step: 1, label: "Largeur totale (cm)" },
-    // Leva va détecter le "#" et créer un color picker tout seul !
+  // 1. NOUVEAU : On ajoute la Profondeur Totale (par défaut 60cm)
+  const { largeurTotaleCM, profondeurCM, couleurMeuble } = useControls('Configuration Globale', {
+    largeurTotaleCM: { value: 60, min: 30, max: 320, step: 1, label: "Largeur (cm)" },
+    profondeurCM: { value: 60, min: 30, max: 100, step: 1, label: "Profondeur (cm)" },
     couleurMeuble: { value: '#e2b388', label: "Couleur" } 
   })
 
   const largeurTotale = largeurTotaleCM * 10; 
+  const profondeur = profondeurCM * 10; // Conversion en mm
 
   useControls('Caisson Sélectionné', () => {
     if (selectedId === null) return {}; 
+    
     return {
-      'Type': buttonGroup({
-        'Base': () => setConfigs(prev => ({ ...prev, [selectedId]: 0 })),
-        'Portes': () => setConfigs(prev => ({ ...prev, [selectedId]: 1 })),
-        'Tiroirs': () => setConfigs(prev => ({ ...prev, [selectedId]: 2 }))
-      }),
+      [`config_${selectedId}`]: {
+        label: 'Agencement',
+        options: {
+          'Vide (1 Étagère)': 0,
+          'Dressing (Tiroirs + Étagère)': 1,
+          'Bibliothèque (4 Étagères)': 2,
+          'Fermé (Porte totale)': 3,
+          'Mixte (Porte haute + Tiroirs)': 4
+        },
+        value: configs[selectedId] || 0,
+        onChange: (v) => setConfigs(prev => ({ ...prev, [selectedId]: v }))
+      },
+      
       [`hauteur_${selectedId}`]: {
         label: 'Hauteur (cm)', 
         value: hauteursRef.current[selectedId] || 81, 
-        min: 40, max: 200, step: 1,
+        min: 50, max: 200, step: 1,
         onChange: (v) => setHauteurs(prev => ({ ...prev, [selectedId]: v }))
       }
     }
@@ -56,9 +66,9 @@ export function Parent() {
         position={[positionX, 0, 0]} 
         largeur={largeurParCaisson}  
         hauteur={currentHauteur} 
+        profondeur={profondeur} // 2. NOUVEAU : On transmet la profondeur
         activeConfig={currentConfig} 
         isSelected={selectedId === i} 
-        // 2. NOUVEAU : On transmet la couleur choisie au caisson
         couleur={couleurMeuble}
         onClick={(e) => {
           e.stopPropagation(); 
