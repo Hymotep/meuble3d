@@ -10,7 +10,6 @@ export function Parent() {
   const hauteursRef = useRef(hauteurs)
   hauteursRef.current = hauteurs
 
-  // 1. NOUVEAU : On ajoute la Profondeur Totale (par défaut 60cm)
   const { largeurTotaleCM, profondeurCM, couleurMeuble } = useControls('Configuration Globale', {
     largeurTotaleCM: { value: 60, min: 30, max: 320, step: 1, label: "Largeur (cm)" },
     profondeurCM: { value: 60, min: 30, max: 100, step: 1, label: "Profondeur (cm)" },
@@ -18,7 +17,7 @@ export function Parent() {
   })
 
   const largeurTotale = largeurTotaleCM * 10; 
-  const profondeur = profondeurCM * 10; // Conversion en mm
+  const profondeur = profondeurCM * 10; 
 
   useControls('Caisson Sélectionné', () => {
     if (selectedId === null) return {}; 
@@ -28,10 +27,14 @@ export function Parent() {
         label: 'Agencement',
         options: {
           'Vide (1 Étagère)': 0,
-          'Dressing (Tiroirs + Étagère)': 1,
+          'Dressing (2 Tiroirs + Penderie)': 1,
+          'Dressing (3 Tiroirs + Penderie)': 6,
+          'Dressing (4 Tiroirs + Penderie)': 7,
+          'Mixte (Porte haute + 2 Tiroirs)': 4,
+          'Mixte (Porte haute + 3 Tiroirs)': 8,
           'Bibliothèque (4 Étagères)': 2,
           'Fermé (Porte totale)': 3,
-          'Mixte (Porte haute + Tiroirs)': 4
+          'Penderie (Barre + Étagère)': 5 
         },
         value: configs[selectedId] || 0,
         onChange: (v) => setConfigs(prev => ({ ...prev, [selectedId]: v }))
@@ -44,7 +47,7 @@ export function Parent() {
         onChange: (v) => setHauteurs(prev => ({ ...prev, [selectedId]: v }))
       }
     }
-  }, [selectedId]) 
+  }, [selectedId, configs]) 
 
   const MAX_LARGEUR_CAISSON = 600; 
   const GAP = 2; 
@@ -66,7 +69,7 @@ export function Parent() {
         position={[positionX, 0, 0]} 
         largeur={largeurParCaisson}  
         hauteur={currentHauteur} 
-        profondeur={profondeur} // 2. NOUVEAU : On transmet la profondeur
+        profondeur={profondeur} 
         activeConfig={currentConfig} 
         isSelected={selectedId === i} 
         couleur={couleurMeuble}
