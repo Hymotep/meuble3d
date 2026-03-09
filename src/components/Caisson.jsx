@@ -3,11 +3,12 @@ import { useGLTF } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 
-export function Caisson({ largeur, hauteur, profondeur, activeConfig, isSelected, onClick, couleur, ...props }) {
+export function Caisson({ largeur, hauteur, profondeur, activeConfig, isSelected, onClick, couleur, isRightHinge, ...props }) {
   const { nodes } = useGLTF("/models/caisson.glb");
 
   const [isHovered, setIsHovered] = useState(false);
-  const doorRef = useRef();
+  const leftDoorRef = useRef();
+  const rightDoorRef = useRef();
   const drawerRef = useRef();
 
   const BASE_WIDTH = 600;
@@ -16,7 +17,7 @@ export function Caisson({ largeur, hauteur, profondeur, activeConfig, isSelected
   const EPAISSEUR = 18;
 
   const customMaterial = useMemo(() => {
-    return new THREE.MeshStandardMaterial({ color: couleur, roughness: 0.8 });
+    return new THREE.MeshStandardMaterial({ color: couleur, roughness: 0.8, side: THREE.DoubleSide });
   }, [couleur]);
 
   const scaleX_horizontales = largeur / BASE_WIDTH;
@@ -36,26 +37,55 @@ export function Caisson({ largeur, hauteur, profondeur, activeConfig, isSelected
   const espaceLibrePourPorte = hauteur - HAUTEUR_BLOC_TIROIR - EPAISSEUR; 
   const scaleZ_demi_porte = espaceLibrePourPorte / HAUTEUR_PORTE_ORIGINE; 
 
-  let nbTiroirs = 2; // Valeur par défaut
+  let nbTiroirs = 2; 
   if (activeConfig === 6 || activeConfig === 8) nbTiroirs = 3;
   if (activeConfig === 7) nbTiroirs = 4;
 
   const HAUTEUR_TIROIR_ORIGINE = 200; 
   const hauteurUnTiroir = HAUTEUR_BLOC_TIROIR / nbTiroirs; 
   const scaleZ_tiroir = hauteurUnTiroir / HAUTEUR_TIROIR_ORIGINE;
-  const configsAvecTiroirs = [1, 4, 6, 7, 8];
-  const configsAvecPorte = [3, 4, 8];
+  
+  // On définit si la config actuelle contient des tiroirs apparents
+  const hasDrawers = [1, 4, 6, 7, 8].includes(activeConfig);
+useFrame(() => {
+    // On définit les angles (en radians)
+    // Math.PI / 6 = 30 degrés (légèrement entrouvert)
+    // Math.PI / 4 = 45 degrés (ouvert à moitié)
+    const angleDeBase = Math.PI / 2.5; 
+    const angleOuvert = Math.PI / 2; // 90 degrés (complètement ouvert)
 
-  useFrame(() => {
-    if (doorRef.current) {
-      const targetRotation = isHovered && configsAvecPorte.includes(activeConfig) ? -Math.PI / 2 : 0;
-      doorRef.current.rotation.z = THREE.MathUtils.lerp(doorRef.current.rotation.z, targetRotation, 0.1);
+    if (leftDoorRef.current) {
+      // Si survolé, on ouvre à fond, sinon on laisse à l'angle de base
+      const targetRotationLeft = isHovered ? -angleOuvert : -angleDeBase;
+      leftDoorRef.current.rotation.z = THREE.MathUtils.lerp(leftDoorRef.current.rotation.z, targetRotationLeft, 0.1);
     }
+    if (rightDoorRef.current) {
+      const targetRotationRight = isHovered ? angleOuvert : angleDeBase;
+      rightDoorRef.current.rotation.z = THREE.MathUtils.lerp(rightDoorRef.current.rotation.z, targetRotationRight, 0.1);
+    }
+    
     if (drawerRef.current) {
-      const targetPosition = isHovered && configsAvecTiroirs.includes(activeConfig) ? -300 : 0;
+      const targetPosition = isHovered && hasDrawers ? -300 : 0;
       drawerRef.current.position.y = THREE.MathUtils.lerp(drawerRef.current.position.y, targetPosition, 0.1);
     }
   });
+
+  const renderPortes = (zOffset, scaleZ) => {
+    if (largeur >= 700) {
+      return (
+        <group>
+          <mesh ref={leftDoorRef} geometry={nodes.Geom3D_porte.geometry} material={customMaterial} position={[0, -18, zOffset]} scale={[25.4 * scaleX_horizontales / 2, 25.4, 25.4 * scaleZ]} />
+          <mesh ref={rightDoorRef} geometry={nodes.Geom3D_porte.geometry} material={customMaterial} position={[largeur, -18, zOffset]} scale={[- (25.4 * scaleX_horizontales / 2), 25.4, 25.4 * scaleZ]} />
+        </group>
+      );
+    } else {
+      if (isRightHinge) {
+        return <mesh ref={rightDoorRef} geometry={nodes.Geom3D_porte.geometry} material={customMaterial} position={[largeur, -18, zOffset]} scale={[- (25.4 * scaleX_horizontales), 25.4, 25.4 * scaleZ]} />;
+      } else {
+        return <mesh ref={leftDoorRef} geometry={nodes.Geom3D_porte.geometry} material={customMaterial} position={[0, -18, zOffset]} scale={[25.4 * scaleX_horizontales, 25.4, 25.4 * scaleZ]} />;
+      }
+    }
+  };
 
   const renderEtagere = (hauteurZ, key) => (
     <mesh key={key} geometry={nodes.Geom3D_étagère_1.geometry} material={customMaterial} position={[EPAISSEUR, 0, hauteurZ]} scale={[25.4 * scaleX_etagere, 25.4 * scaleY_profondeur, 25.4]} />
@@ -99,9 +129,9 @@ export function Caisson({ largeur, hauteur, profondeur, activeConfig, isSelected
           <mesh geometry={nodes.Geom3D_traverse_haut.geometry} material={customMaterial} position={[0, 0, hauteur - EPAISSEUR]} scale={[25.4 * scaleX_horizontales, 25.4 * scaleY_profondeur, 25.4]} />
           <mesh geometry={nodes.Geom3D_fond_arrière.geometry} material={customMaterial} position={[0, profondeur, 0]} scale={[25.4 * scaleX_horizontales, 25.4, 25.4 * scaleZ_fond]} />
 
+          {/* Rendu dynamique de l'intérieur basé sur activeConfig */}
           {activeConfig === 0 && renderEtagere(hauteur / 2, "etagere-centre")}
           
-          {/* NOUVEAU : Si la config fait partie de celles avec des tiroirs + penderie */}
           {[1, 6, 7].includes(activeConfig) && (
             <group>
               {renderTiroirs()} 
@@ -116,17 +146,10 @@ export function Caisson({ largeur, hauteur, profondeur, activeConfig, isSelected
             <group>
               {renderEtagere(hauteur - 300, "etagere-cachee")}
               {renderPenderie(hauteur - 300, "penderie-cachee")}
-              <mesh ref={doorRef} geometry={nodes.Geom3D_porte.geometry} material={customMaterial} position={[0, -18, 0]} scale={[25.4 * scaleX_horizontales, 25.4, 25.4 * scaleZ_fond]} />
             </group>
           )}
 
-          {/* NOUVEAU : Si la config fait partie des configurations "Mixtes" (Porte + Tiroirs) */}
-          {[4, 8].includes(activeConfig) && (
-            <group>
-              {renderTiroirs()}
-              <mesh ref={doorRef} geometry={nodes.Geom3D_porte.geometry} material={customMaterial} position={[0, -18, HAUTEUR_BLOC_TIROIR]} scale={[25.4 * scaleX_horizontales, 25.4, 25.4 * scaleZ_demi_porte]} />
-            </group>
-          )}
+          {[4, 8].includes(activeConfig) && renderTiroirs()}
 
           {activeConfig === 5 && (
             <group>
@@ -135,6 +158,11 @@ export function Caisson({ largeur, hauteur, profondeur, activeConfig, isSelected
             </group>
           )}
 
+          {/* LA MAGIE EST ICI : Les portes sont ajoutées systématiquement à la fin ! */}
+          {/* Si la config a des tiroirs, la porte commence au-dessus et est plus courte */}
+          {renderPortes(hasDrawers ? HAUTEUR_BLOC_TIROIR : 0, hasDrawers ? scaleZ_demi_porte : scaleZ_fond)}
+
+          {/* Highlight de sélection */}
           {isSelected && (
             <mesh position={[largeur / 2, profondeur / 2, hauteur / 2]}>
               <boxGeometry args={[largeur + 4, profondeur + 4, hauteur + 4]} />

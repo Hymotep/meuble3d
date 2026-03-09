@@ -11,13 +11,33 @@ export function Parent() {
   hauteursRef.current = hauteurs
 
   const { largeurTotaleCM, profondeurCM, couleurMeuble } = useControls('Configuration Globale', {
-    largeurTotaleCM: { value: 60, min: 30, max: 320, step: 1, label: "Largeur (cm)" },
+    largeurTotaleCM: { value: 120, min: 40, max: 600, step: 1, label: "Largeur (cm)" },
     profondeurCM: { value: 60, min: 30, max: 100, step: 1, label: "Profondeur (cm)" },
     couleurMeuble: { value: '#e2b388', label: "Couleur" } 
   })
 
-  const largeurTotale = largeurTotaleCM * 10; 
   const profondeur = profondeurCM * 10; 
+
+  // NOUVELLE LOGIQUE DE DÉCOUPE DES CAISSONS
+  const widths = [];
+  let remainingCM = largeurTotaleCM;
+
+  // Tant qu'on a 120cm ou plus, on crée un bloc de 80cm
+  while (remainingCM >= 120) {
+    widths.push(800); // 80 cm en mm
+    remainingCM -= 80;
+  }
+  // Le reste va dans le dernier bloc (qui fera donc entre 40 et 119 cm)
+  if (remainingCM > 0) {
+    widths.push(remainingCM * 10);
+  }
+
+  const GAP = 2; // Espace entre les caissons en mm
+  // On retire l'espace des gaps sur le dernier caisson pour respecter la taille totale au millimètre
+  if (widths.length > 1) {
+    const totalGaps = GAP * (widths.length - 1);
+    widths[widths.length - 1] -= totalGaps;
+  }
 
   useControls('Caisson Sélectionné', () => {
     if (selectedId === null) return {}; 
@@ -36,49 +56,49 @@ export function Parent() {
           'Fermé (Porte totale)': 3,
           'Penderie (Barre + Étagère)': 5 
         },
-        value: configs[selectedId] || 0,
+        value: configs[selectedId] !== undefined ? configs[selectedId] : 4,
         onChange: (v) => setConfigs(prev => ({ ...prev, [selectedId]: v }))
       },
       
       [`hauteur_${selectedId}`]: {
         label: 'Hauteur (cm)', 
-        value: hauteursRef.current[selectedId] || 81, 
-        min: 50, max: 200, step: 1,
+        value: hauteursRef.current[selectedId] || 200, 
+        min: 50, max: 250, step: 1,
         onChange: (v) => setHauteurs(prev => ({ ...prev, [selectedId]: v }))
       }
     }
   }, [selectedId, configs]) 
 
-  const MAX_LARGEUR_CAISSON = 600; 
-  const GAP = 2; 
-
-  const nbCaissons = Math.ceil(largeurTotale / MAX_LARGEUR_CAISSON);
-  const espaceTotalGaps = GAP * (nbCaissons - 1);
-  const largeurParCaisson = (largeurTotale - espaceTotalGaps) / nbCaissons;
-
   const caissonsGeneres = [];
+  
+  // LA MAGIE EST ICI : On recule le point de départ de la moitié de la largeur totale !
+  const largeurTotaleMM = largeurTotaleCM * 10;
+  let currentPositionX = -largeurTotaleMM / 2;
 
-  for (let i = 0; i < nbCaissons; i++) {
-    const positionX = (i * (largeurParCaisson + GAP)) / 1000;
-    const currentConfig = configs[i] || 0; 
-    const currentHauteur = (hauteurs[i] || 81) * 10; 
+  for (let i = 0; i < widths.length; i++) {
+    const currentConfig = configs[i] !== undefined ? configs[i] : 4; 
+    const currentHauteur = (hauteurs[i] || 200) * 10; 
+    const isRightHinge = i % 2 !== 0;
 
     caissonsGeneres.push(
       <Caisson 
         key={i} 
-        position={[positionX, 0, 0]} 
-        largeur={largeurParCaisson}  
+        position={[currentPositionX / 1000, 0, 0]} // On convertit en mètres pour ThreeJS
+        largeur={widths[i]}  
         hauteur={currentHauteur} 
         profondeur={profondeur} 
         activeConfig={currentConfig} 
         isSelected={selectedId === i} 
         couleur={couleurMeuble}
+        isRightHinge={isRightHinge}
         onClick={(e) => {
           e.stopPropagation(); 
           setSelectedId(i);    
         }}
       />
     );
+    // On avance la position X pour le prochain caisson
+    currentPositionX += widths[i] + GAP;
   }
 
   return (
