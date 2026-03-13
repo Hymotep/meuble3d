@@ -83,7 +83,6 @@ const DraggableCaisson = ({ position, dimensions, isSelected, id, config, type }
 
             const SNAP_DISTANCE = 0.2;
 
-            // --- 1. BLOCAGE CONTRE LES MURS ---
             const roomW = room.width / 1000;
             const roomD = room.depth / 1000;
             const murGauche = -roomW / 2 + worldW / 2;
@@ -96,19 +95,12 @@ const DraggableCaisson = ({ position, dimensions, isSelected, id, config, type }
             if (newZ < murFond) newZ = murFond;
             if (newZ > murFace) newZ = murFace;
 
-            // --- 2. FILTRAGE INTELLIGENT DES COLLISIONS ---
+            const isFloorItem = type === "base_cabinet" || type === "tall_cabinet" || type === "island";
+            
             const interactingItems = items.filter((i) => {
                 if (i.id === id) return false;
-                
-                // Un meuble bas interagit avec les autres meubles bas et les colonnes
-                if (type === "base_cabinet") return i.type === "base_cabinet" || i.type === "tall_cabinet";
-                
-                // Un meuble haut interagit avec les autres meubles hauts et les colonnes
+                if (isFloorItem) return i.type === "base_cabinet" || i.type === "tall_cabinet" || i.type === "island";
                 if (type === "wall_cabinet") return i.type === "wall_cabinet" || i.type === "tall_cabinet";
-                
-                // Une colonne est géante, elle interagit avec absolument TOUT
-                if (type === "tall_cabinet") return true; 
-
                 return false;
             });
 
@@ -126,24 +118,15 @@ const DraggableCaisson = ({ position, dimensions, isSelected, id, config, type }
                 let tempX = newX;
                 let tempZ = newZ;
 
-                // Magnétisme X
-                if (Math.abs(newX + worldW / 2 - (otherX - otherW / 2)) < SNAP_DISTANCE) {
-                    tempX = otherX - otherW / 2 - worldW / 2;
-                } else if (Math.abs(newX - worldW / 2 - (otherX + otherW / 2)) < SNAP_DISTANCE) {
-                    tempX = otherX + otherW / 2 + worldW / 2;
-                }
+                if (Math.abs(newX + worldW / 2 - (otherX - otherW / 2)) < SNAP_DISTANCE) tempX = otherX - otherW / 2 - worldW / 2;
+                else if (Math.abs(newX - worldW / 2 - (otherX + otherW / 2)) < SNAP_DISTANCE) tempX = otherX + otherW / 2 + worldW / 2;
 
-                // Magnétisme Z
-                if (Math.abs(newZ - worldD / 2 - (otherZ - otherD / 2)) < SNAP_DISTANCE) {
-                    tempZ = otherZ - otherD / 2 + worldD / 2;
-                } else if (Math.abs(newZ + worldD / 2 - (otherZ + otherD / 2)) < SNAP_DISTANCE) {
-                    tempZ = Math.abs(newZ + worldD / 2 - (otherZ + otherD / 2)) < SNAP_DISTANCE ? otherZ + otherD / 2 - worldD / 2 : tempZ;
-                }
+                if (Math.abs(newZ - worldD / 2 - (otherZ - otherD / 2)) < SNAP_DISTANCE) tempZ = otherZ - otherD / 2 + worldD / 2;
+                else if (Math.abs(newZ + worldD / 2 - (otherZ + otherD / 2)) < SNAP_DISTANCE) tempZ = Math.abs(newZ + worldD / 2 - (otherZ + otherD / 2)) < SNAP_DISTANCE ? otherZ + otherD / 2 - worldD / 2 : tempZ;
 
                 newX = tempX;
                 newZ = tempZ;
 
-                // Test de collision (Boîte contre Boîte)
                 const myBox = { x: newX - worldW / 2, z: newZ - worldD / 2, w: worldW, d: worldD };
                 const otherBox = { x: otherX - otherW / 2, z: otherZ - otherD / 2, w: otherW, d: otherD };
 
@@ -325,15 +308,17 @@ const Sidebar = () => {
     };
 
     const handleAddIsland = () => {
-        const islandConfig = { couleurExt: "#1e3a8a", couleurPoignees: "#ffffff", couleurInt: "#e5e7eb" };
-        const baseDim = { width: 600, height: 812, depth: 600 };
-        const islandCabinets = [
-            { id: crypto.randomUUID(), type: "base_cabinet", position: [-300, 0, 300], rotation: 0, dimensions: baseDim, config: { ...islandConfig, activeConfig: 4, avecPoignees: true, isTiroirsInterieurs: false, couleurPlanTravail: "#daba9e", equipement: "none" } },
-            { id: crypto.randomUUID(), type: "base_cabinet", position: [300, 0, 300], rotation: 0, dimensions: baseDim, config: { ...islandConfig, activeConfig: 4, avecPoignees: true, isTiroirsInterieurs: false, couleurPlanTravail: "#daba9e", equipement: "none" } },
-            { id: crypto.randomUUID(), type: "base_cabinet", position: [-300, 0, -300], rotation: 180, dimensions: baseDim, config: { ...islandConfig, activeConfig: 4, avecPoignees: true, isTiroirsInterieurs: false, couleurPlanTravail: "#daba9e", equipement: "none" } },
-            { id: crypto.randomUUID(), type: "base_cabinet", position: [300, 0, -300], rotation: 180, dimensions: baseDim, config: { ...islandConfig, activeConfig: 4, avecPoignees: true, isTiroirsInterieurs: false, couleurPlanTravail: "#daba9e", equipement: "none" } },
-        ];
-        islandCabinets.forEach((cab) => addItem(cab));
+        addItem({
+            id: crypto.randomUUID(),
+            type: "island",
+            position: [0, 0, 0],
+            dimensions: { width: 1800, height: 900, depth: 900 },
+            config: {
+                activeConfig: 4, couleurExt: "#1e3a8a", couleurInt: "#e5e7eb",
+                avecPoignees: true, couleurPoignees: "#ffffff", isTiroirsInterieurs: false,
+                couleurPlanTravail: "#daba9e", equipement: "none"
+            },
+        });
     };
 
     return (
@@ -380,7 +365,7 @@ const Sidebar = () => {
                     <button onClick={() => generateCabinet("base_cabinet", { width: 600, height: 812, depth: 600 })} style={theme.btnPrimary}>+ Meuble Bas</button>
                     <button onClick={() => generateCabinet("wall_cabinet", { width: 600, height: 700, depth: 350 })} style={theme.btnSecondary}>+ Meuble Haut</button>
                     <button onClick={() => generateCabinet("tall_cabinet", { width: 600, height: 2100, depth: 600 })} style={theme.btnTall}>+ Colonne (2m10)</button>
-                    <button onClick={handleAddIsland} style={theme.btnIsland}>+ Îlot Central (Lot de 4)</button>
+                    <button onClick={handleAddIsland} style={theme.btnIsland}>+ Créer un Îlot Central</button>
                 </div>
 
                 {/* EDITION DU CAISSON SELECTIONNE */}
@@ -392,12 +377,22 @@ const Sidebar = () => {
                             ↻ Faire pivoter (90°)
                         </button>
 
-                        <label style={theme.label}>Largeur du meuble (mm)</label>
+                        <label style={theme.label}>Largeur totale (mm)</label>
                         <select value={selectedItem.dimensions.width} onChange={(e) => updateItemDimensions(selectedId, { width: Number(e.target.value) })} style={theme.input}>
-                            <option value={400}>400 mm (Étroit)</option>
-                            <option value={600}>600 mm (Standard)</option>
-                            <option value={800}>800 mm (Large)</option>
-                            <option value={1000}>1000 mm (Très large)</option>
+                            {selectedItem.type === "island" ? (
+                                <>
+                                    <option value={1200}>1200 mm (Petit Îlot)</option>
+                                    <option value={1800}>1800 mm (Îlot Standard)</option>
+                                    <option value={2400}>2400 mm (Grand Îlot)</option>
+                                </>
+                            ) : (
+                                <>
+                                    <option value={400}>400 mm (Étroit)</option>
+                                    <option value={600}>600 mm (Standard)</option>
+                                    <option value={800}>800 mm (Large)</option>
+                                    <option value={1000}>1000 mm (Très large)</option>
+                                </>
+                            )}
                         </select>
 
                         <label style={theme.label}>Apparence</label>
@@ -424,17 +419,30 @@ const Sidebar = () => {
                             </label>
                         )}
 
-                        {selectedItem.type === "base_cabinet" && (
+                        {/* NOUVEAU : GESTION DES ÉQUIPEMENTS (Meubles Bas ET Colonnes) */}
+                        {(selectedItem.type === "base_cabinet" || selectedItem.type === "island" || selectedItem.type === "tall_cabinet") && (
                             <div style={{ marginTop: "20px", paddingTop: "20px", borderTop: "1px solid #cbd5e1" }}>
-                                <label style={{...theme.label, marginTop: 0}}>Équipement posé</label>
-                                <select value={selectedItem.config.equipement || "none"} onChange={(e) => updateItemConfig(selectedId, { equipement: e.target.value })} style={theme.input}>
-                                    <option value="none">Plan de travail libre</option>
-                                    <option value="sink">Évier + Robinet</option>
-                                    <option value="cooktop">Plaque de Cuisson</option>
-                                </select>
+                                <label style={{...theme.label, marginTop: 0}}>Équipement intégré</label>
+                                
+                                {selectedItem.type === "tall_cabinet" ? (
+                                    <select value={selectedItem.config.equipement || "none"} onChange={(e) => updateItemConfig(selectedId, { equipement: e.target.value })} style={theme.input}>
+                                        <option value="none">Aucun (Armoire simple)</option>
+                                        <option value="oven_microwave">Four + Micro-ondes</option>
+                                    </select>
+                                ) : (
+                                    <select value={selectedItem.config.equipement || "none"} onChange={(e) => updateItemConfig(selectedId, { equipement: e.target.value })} style={theme.input}>
+                                        <option value="none">Plan de travail libre</option>
+                                        <option value="sink">Évier + Robinet</option>
+                                        <option value="cooktop">Plaque de Cuisson</option>
+                                    </select>
+                                )}
 
-                                <label style={theme.label}>Couleur du Plan de Travail</label>
-                                <input type="color" value={selectedItem.config.couleurPlanTravail || "#daba9e"} onChange={(e) => updateItemConfig(selectedId, { couleurPlanTravail: e.target.value })} style={theme.colorPicker} />
+                                {(selectedItem.type === "base_cabinet" || selectedItem.type === "island") && (
+                                    <>
+                                        <label style={theme.label}>Couleur du Plan de Travail</label>
+                                        <input type="color" value={selectedItem.config.couleurPlanTravail || "#daba9e"} onChange={(e) => updateItemConfig(selectedId, { couleurPlanTravail: e.target.value })} style={theme.colorPicker} />
+                                    </>
+                                )}
                             </div>
                         )}
 
