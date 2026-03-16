@@ -6,8 +6,9 @@ export const Caisson2 = ({
     hauteur = 812,
     profondeur = 600,
     isSelected = false,
-    couleurExt = "#ffffff", // Façades
-    couleurInt = "#e5e7eb", // Structure du meuble
+    isColliding = false, // NOUVEAU : Prop pour le retour visuel de collision
+    couleurExt = "#ffffff",
+    couleurInt = "#e5e7eb",
     avecPoignees = true,
     couleurPoignees = "#222222",
     type = "base_cabinet",
@@ -81,7 +82,12 @@ export const Caisson2 = ({
                     </group>
                 )}
 
-                {isSelected && <mesh position={[0, 0, 0]}><boxGeometry args={[w + 0.005, h + 0.005, d + 0.005]} /><meshBasicMaterial color="#3b82f6" wireframe /></mesh>}
+                {(isSelected || isColliding) && (
+                    <mesh position={[0, 0, 0]}>
+                        <boxGeometry args={[w + 0.005, h + 0.005, d + 0.005]} />
+                        <meshBasicMaterial color={isColliding ? "#ef4444" : "#3b82f6"} transparent opacity={isColliding ? 0.3 : 0.8} wireframe={!isColliding} />
+                    </mesh>
+                )}
             </group>
         );
     }
@@ -91,11 +97,10 @@ export const Caisson2 = ({
     const t2H = corpsH * 0.4;
     const t3H = corpsH * 0.4;
 
-    // Calculs spécifiques pour la Colonne avec Four
-    const bottomDoorH = 0.7; // Porte du bas de 70cm (alignée avec les autres meubles)
-    const ovenH = 0.6; // Four standard de 60cm
-    const mwH = 0.38; // Micro-ondes de 38cm
-    const topDoorH = corpsH - bottomDoorH - ovenH - mwH; // Reste pour la porte du haut
+    const bottomDoorH = 0.7; 
+    const ovenH = 0.6; 
+    const mwH = 0.38; 
+    const topDoorH = corpsH - bottomDoorH - ovenH - mwH; 
     const doorZ = (d / 2) - (doorThickness / 2) + 0.002;
 
     return (
@@ -113,43 +118,34 @@ export const Caisson2 = ({
                 <Edges color="#cccccc" opacity={0.5} transparent />
             </mesh>
 
-            {/* NOUVEAU : LA LOGIQUE DE LA FAÇADE */}
             {isTall && equipement === "oven_microwave" ? (
                 <group>
-                    {/* PORTE DU BAS */}
                     <mesh position={[0, bottomY + plintheH + bottomDoorH/2, doorZ]}><boxGeometry args={[w - gap, bottomDoorH - gap, doorThickness]} /><meshStandardMaterial color={couleurExt} roughness={0.3} /></mesh>
                     {avecPoignees && <mesh position={[0, bottomY + plintheH + bottomDoorH - 0.06, doorZ + 0.015]}><boxGeometry args={[w * 0.4, 0.01, 0.02]} /><meshStandardMaterial color={couleurPoignees} metalness={0.7} /></mesh>}
 
-                    {/* FOUR ENCASTRÉ */}
                     <group position={[0, bottomY + plintheH + bottomDoorH + ovenH/2, doorZ]}>
                         <mesh><boxGeometry args={[w - gap, ovenH - gap, doorThickness]} /><meshStandardMaterial color="#111827" /></mesh>
                         <mesh position={[0, -0.05, 0.004]}><boxGeometry args={[w * 0.8, ovenH * 0.6, doorThickness]} /><meshStandardMaterial color="#000000" metalness={0.8} roughness={0.1} /></mesh>
                         <mesh position={[0, 0.2, 0.02]}><boxGeometry args={[w * 0.7, 0.015, 0.02]} /><meshStandardMaterial color="#d1d5db" metalness={0.8} /></mesh>
                     </group>
 
-                    {/* MICRO-ONDES ENCASTRÉ */}
                     <group position={[0, bottomY + plintheH + bottomDoorH + ovenH + mwH/2, doorZ]}>
                         <mesh><boxGeometry args={[w - gap, mwH - gap, doorThickness]} /><meshStandardMaterial color="#111827" /></mesh>
-                        {/* Vitre gauche */}
                         <mesh position={[-w * 0.1, 0, 0.004]}><boxGeometry args={[w * 0.6, mwH * 0.7, doorThickness]} /><meshStandardMaterial color="#000000" metalness={0.8} roughness={0.1} /></mesh>
-                        {/* Panneau de contrôle droit */}
                         <mesh position={[w * 0.35, 0, 0.004]}><boxGeometry args={[w * 0.15, mwH * 0.7, doorThickness]} /><meshStandardMaterial color="#1f2937" /></mesh>
                         <mesh position={[w * 0.35, 0.1, 0.006]}><boxGeometry args={[w * 0.1, 0.05, doorThickness]} /><meshBasicMaterial color="#34d399" /></mesh>
                     </group>
 
-                    {/* PORTE DU HAUT */}
                     <mesh position={[0, bottomY + plintheH + bottomDoorH + ovenH + mwH + topDoorH/2, doorZ]}><boxGeometry args={[w - gap, topDoorH - gap, doorThickness]} /><meshStandardMaterial color={couleurExt} roughness={0.3} /></mesh>
                     {avecPoignees && <mesh position={[0, bottomY + plintheH + bottomDoorH + ovenH + mwH + 0.06, doorZ + 0.015]}><boxGeometry args={[w * 0.4, 0.01, 0.02]} /><meshStandardMaterial color={couleurPoignees} metalness={0.7} /></mesh>}
                 </group>
 
             ) : !isTiroirsInterieurs ? (
-                // PORTE SIMPLE STANDARD
                 <group>
                     <mesh position={[0, bottomY + plintheH + corpsH / 2, doorZ]}><boxGeometry args={[w - gap, corpsH - gap, doorThickness]} /><meshStandardMaterial color={couleurExt} roughness={0.3} metalness={0.1} /><Edges color="#000000" opacity={0.1} transparent /></mesh>
                     {avecPoignees && <mesh position={[0, bottomY + plintheH + corpsH / 2 + (isBase ? (corpsH / 2 - 0.06) : (-corpsH / 2 + 0.06)), doorZ + 0.015]}><boxGeometry args={[w * 0.4, 0.01, 0.02]} /><meshStandardMaterial color={couleurPoignees} metalness={0.7} roughness={0.2} /></mesh>}
                 </group>
             ) : (
-                // CASSEROLIER
                 <group>
                     <mesh position={[0, bottomY + plintheH + t3H + t2H + t1H/2, doorZ]}><boxGeometry args={[w - gap, t1H - gap, doorThickness]} /><meshStandardMaterial color={couleurExt} roughness={0.3} /><Edges color="#000000" opacity={0.1} transparent /></mesh>
                     {avecPoignees && <mesh position={[0, bottomY + plintheH + t3H + t2H + t1H/2, doorZ + 0.015]}><boxGeometry args={[w * 0.4, 0.01, 0.02]} /><meshStandardMaterial color={couleurPoignees} metalness={0.7} /></mesh>}
@@ -183,10 +179,10 @@ export const Caisson2 = ({
                 </group>
             )}
 
-            {isSelected && (
+            {(isSelected || isColliding) && (
                 <mesh position={[0, 0, 0]}>
                     <boxGeometry args={[w + 0.005, h + 0.005, d + 0.005]} />
-                    <meshBasicMaterial color="#3b82f6" wireframe />
+                    <meshBasicMaterial color={isColliding ? "#ef4444" : "#3b82f6"} transparent opacity={isColliding ? 0.3 : 0.8} wireframe={!isColliding} />
                 </mesh>
             )}
         </group>

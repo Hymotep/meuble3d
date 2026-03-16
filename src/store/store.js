@@ -26,9 +26,74 @@ export const useStore = create((set) => ({
         items: state.items.map(item => item.id === id ? { ...item, config: { ...item.config, ...newConfig } } : item)
     })),
 
-    updateItemDimensions: (id, newDimensions) => set((state) => ({
-        items: state.items.map(item => item.id === id ? { ...item, dimensions: { ...item.dimensions, ...newDimensions } } : item)
-    })),
+    // --- NOUVEAU : LOGIQUE DE REPOUSSEMENT INTELLIGENT ---
+    updateItemDimensions: (id, newDimensions) => set((state) => {
+        const targetItem = state.items.find(i => i.id === id);
+        if (!targetItem) return state;
+
+        // 1. On calcule de combien le meuble a grandi dans l'espace 3D
+        const isRotated = targetItem.rotation === 90 || targetItem.rotation === 270;
+        
+        const newW = newDimensions.width !== undefined ? newDimensions.width : targetItem.dimensions.width;
+        const newD = newDimensions.depth !== undefined ? newDimensions.depth : targetItem.dimensions.depth;
+
+        const oldWorldW = isRotated ? targetItem.dimensions.depth : targetItem.dimensions.width;
+        const newWorldW = isRotated ? newD : newW;
+        const deltaX = newWorldW - oldWorldW; // Différence sur l'axe Gauche/Droite
+
+        const oldWorldD = isRotated ? targetItem.dimensions.width : targetItem.dimensions.depth;
+        const newWorldD = isRotated ? newW : newD;
+        const deltaZ = newWorldD - oldWorldD; // Différence sur l'axe Avant/Arrière
+
+        // 2. On met à jour les dimensions ET on décale les voisins
+        const newItems = state.items.map(item => {
+            // Si c'est le meuble qu'on est en train de modifier, on change juste sa taille
+            if (item.id === id) {
+                return { ...item, dimensions: { ...item.dimensions, ...newDimensions } };
+            }
+
+            let nx = item.position[0];
+            let ny = item.position[1];
+            let nz = item.position[2];
+
+            // DÉCALAGE HORIZONTAL (Axe X)
+            // Si l'objet voisin est sur la même ligne (tolérance sur la profondeur)
+            if (Math.abs(item.position[2] - targetItem.position[2]) < (oldWorldD / 2 + 50)) {
+                if (deltaX !== 0) {
+                    if (item.position[0] > targetItem.position[0] + 10) nx += deltaX / 2; // Pousse vers la droite
+                    else if (item.position[0] < targetItem.position[0] - 10) nx -= deltaX / 2; // Pousse vers la gauche
+                }
+            }
+
+            // DÉCALAGE VERTICAL (Axe Z - Pour les meubles pivotés)
+            // Si l'objet voisin est dans la même colonne (tolérance sur la largeur)
+            if (Math.abs(item.position[0] - targetItem.position[0]) < (oldWorldW / 2 + 50)) {
+                if (deltaZ !== 0) {
+                    if (item.position[2] > targetItem.position[2] + 10) nz += deltaZ / 2; // Pousse vers l'avant
+                    else if (item.position[2] < targetItem.position[2] - 10) nz -= deltaZ / 2; // Pousse vers le fond
+                }
+            }
+
+            // SÉCURITÉ : On bloque les meubles poussés contre les murs pour qu'ils ne sortent pas de la pièce
+            const itemIsRotated = item.rotation === 90 || item.rotation === 270;
+            const itemW = itemIsRotated ? item.dimensions.depth : item.dimensions.width;
+            const itemD = itemIsRotated ? item.dimensions.width : item.dimensions.depth;
+
+            const murGauche = -state.room.width / 2 + itemW / 2;
+            const murDroit = state.room.width / 2 - itemW / 2;
+            const murFond = -state.room.depth / 2 + itemD / 2;
+            const murFace = state.room.depth / 2 - itemD / 2;
+
+            if (nx < murGauche) nx = murGauche;
+            if (nx > murDroit) nx = murDroit;
+            if (nz < murFond) nz = murFond;
+            if (nz > murFace) nz = murFace;
+
+            return { ...item, position: [nx, ny, nz] };
+        });
+
+        return { items: newItems };
+    }),
 
     deleteItem: (id) => set((state) => ({
         items: state.items.filter(item => item.id !== id),
@@ -38,11 +103,10 @@ export const useStore = create((set) => ({
     setSelectedId: (id) => set({ selectedId: id }),
     setDraggedId: (id) => set({ draggedId: id }),
 
-    // NOUVEAU : Fonction pour écraser tout le store avec un fichier chargé
     loadState: (newState) => set({
         room: newState.room,
         items: newState.items,
-        selectedId: null, // On désélectionne tout par sécurité
+        selectedId: null, 
         draggedId: null
     })
 }));

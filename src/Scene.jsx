@@ -1,11 +1,11 @@
 import React, { useRef } from "react";
 import { Canvas, useThree } from "@react-three/fiber";
 import { OrbitControls, Grid } from "@react-three/drei";
-import { useStore } from "../src/store/store";
+import { useStore } from "../src/store/store"; // Ajuste le chemin si besoin
 import { useDrag } from "@use-gesture/react";
 import * as THREE from "three";
 
-import { Caisson2 } from "./components/Caisson2";
+import { Caisson2 } from "./components/Caisson2"; // Ajuste le chemin si besoin
 
 const theme = {
     panel: { width: "360px", background: "#f8fafc", borderRight: "1px solid #e2e8f0", display: "flex", flexDirection: "column", height: "100vh", fontFamily: "system-ui, -apple-system, sans-serif" },
@@ -41,9 +41,12 @@ const DraggableCaisson = ({ position, dimensions, isSelected, id, config, type }
     const setSelectedId = useStore((state) => state.setSelectedId);
     const setDraggedId = useStore((state) => state.setDraggedId);
     const updateItemPosition = useStore((state) => state.updateItemPosition);
+    
     const dragOffset = useRef(new THREE.Vector3());
-
     const lastValidPos = useRef({ x: position[0]/1000, z: position[2]/1000 });
+    
+    // NOUVEAU : État local pour gérer la couleur rouge en direct
+    const [isColliding, setIsColliding] = React.useState(false);
 
     const currentItem = items.find((i) => i.id === id);
     const rotationDeg = currentItem?.rotation || 0;
@@ -57,7 +60,7 @@ const DraggableCaisson = ({ position, dimensions, isSelected, id, config, type }
     const worldW = isRotated ? d : w;
     const worldD = isRotated ? w : d;
 
-    const bind = useDrag(({ active, first, last, event }) => {
+   const bind = useDrag(({ active, first, last, event }) => {
         const floorPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
         const raycaster = new THREE.Raycaster();
         const mouse = new THREE.Vector2((event.clientX / window.innerWidth) * 2 - 1, -(event.clientY / window.innerHeight) * 2 + 1);
@@ -79,10 +82,13 @@ const DraggableCaisson = ({ position, dimensions, isSelected, id, config, type }
         if (active && meshRef.current) {
             let newX = intersectPoint.x - dragOffset.current.x;
             let newZ = intersectPoint.z - dragOffset.current.z;
+            
+            // Hauteur spécifique selon le type de meuble (Meuble haut = 1.4m du sol)
             let newY = type === "wall_cabinet" ? 1.4 : 0;
 
-            const SNAP_DISTANCE = 0.2;
+            const SNAP_DISTANCE = 0.15;
 
+            // 1. AIMANTATION AUX MURS
             const roomW = room.width / 1000;
             const roomD = room.depth / 1000;
             const murGauche = -roomW / 2 + worldW / 2;
@@ -90,60 +96,76 @@ const DraggableCaisson = ({ position, dimensions, isSelected, id, config, type }
             const murFond = -roomD / 2 + worldD / 2;
             const murFace = roomD / 2 - worldD / 2;
 
-            if (newX < murGauche) newX = murGauche;
-            if (newX > murDroit) newX = murDroit;
-            if (newZ < murFond) newZ = murFond;
-            if (newZ > murFace) newZ = murFace;
-
-            const isFloorItem = type === "base_cabinet" || type === "tall_cabinet" || type === "island";
+            if (Math.abs(newX - murGauche) < SNAP_DISTANCE) newX = murGauche;
+            else if (Math.abs(newX - murDroit) < SNAP_DISTANCE) newX = murDroit;
             
-            const interactingItems = items.filter((i) => {
-                if (i.id === id) return false;
-                if (isFloorItem) return i.type === "base_cabinet" || i.type === "tall_cabinet" || i.type === "island";
-                if (type === "wall_cabinet") return i.type === "wall_cabinet" || i.type === "tall_cabinet";
-                return false;
-            });
+            if (Math.abs(newZ - murFond) < SNAP_DISTANCE) newZ = murFond;
+            else if (Math.abs(newZ - murFace) < SNAP_DISTANCE) newZ = murFace;
 
-            let hasCollision = false;
+            newX = Math.max(murGauche, Math.min(murDroit, newX));
+            newZ = Math.max(murFond, Math.min(murFace, newZ));
 
+            // On vérifie les collisions avec TOUS les autres meubles (plus de filtre restrictif)
+            const interactingItems = items.filter((i) => i.id !== id);
+
+            let currentCollision = false;
+
+            // 2. AIMANTATION ET DÉTECTION DE COLLISION 3D
             interactingItems.forEach((otherItem) => {
                 const otherRot = otherItem.rotation || 0;
                 const otherIsRot = otherRot === 90 || otherRot === 270;
+                
+                // Dimensions de l'autre meuble
                 const otherW = (otherIsRot ? otherItem.dimensions.depth : otherItem.dimensions.width) / 1000;
                 const otherD = (otherIsRot ? otherItem.dimensions.width : otherItem.dimensions.depth) / 1000;
-
+                const otherH = otherItem.dimensions.height / 1000;
+                
+                // Position de l'autre meuble
                 const otherX = otherItem.position[0] / 1000;
+                const otherY = otherItem.position[1] / 1000;
                 const otherZ = otherItem.position[2] / 1000;
 
-                let tempX = newX;
-                let tempZ = newZ;
+                // --- SNAPPING (Aimantation en 2D pour aligner les meubles facilement) ---
+                if (Math.abs((newX + worldW / 2) - (otherX - otherW / 2)) < SNAP_DISTANCE && Math.abs(newZ - otherZ) < worldD) {
+                    newX = otherX - otherW / 2 - worldW / 2;
+                } else if (Math.abs((newX - worldW / 2) - (otherX + otherW / 2)) < SNAP_DISTANCE && Math.abs(newZ - otherZ) < worldD) {
+                    newX = otherX + otherW / 2 + worldW / 2;
+                }
 
-                if (Math.abs(newX + worldW / 2 - (otherX - otherW / 2)) < SNAP_DISTANCE) tempX = otherX - otherW / 2 - worldW / 2;
-                else if (Math.abs(newX - worldW / 2 - (otherX + otherW / 2)) < SNAP_DISTANCE) tempX = otherX + otherW / 2 + worldW / 2;
+                if (Math.abs((newZ - worldD / 2) - (otherZ - otherD / 2)) < SNAP_DISTANCE && Math.abs(newX - otherX) < worldW) {
+                    newZ = otherZ - otherD / 2 + worldD / 2;
+                } else if (Math.abs((newZ + worldD / 2) - (otherZ + otherD / 2)) < SNAP_DISTANCE && Math.abs(newX - otherX) < worldW) {
+                    newZ = otherZ + otherD / 2 - worldD / 2;
+                }
 
-                if (Math.abs(newZ - worldD / 2 - (otherZ - otherD / 2)) < SNAP_DISTANCE) tempZ = otherZ - otherD / 2 + worldD / 2;
-                else if (Math.abs(newZ + worldD / 2 - (otherZ + otherD / 2)) < SNAP_DISTANCE) tempZ = Math.abs(newZ + worldD / 2 - (otherZ + otherD / 2)) < SNAP_DISTANCE ? otherZ + otherD / 2 - worldD / 2 : tempZ;
+                // --- VRAIE DÉTECTION DE COLLISION 3D ---
+                const myMinX = newX - worldW / 2;
+                const myMaxX = newX + worldW / 2;
+                const myMinY = newY;
+                const myMaxY = newY + h;
+                const myMinZ = newZ - worldD / 2;
+                const myMaxZ = newZ + worldD / 2;
 
-                newX = tempX;
-                newZ = tempZ;
+                const oMinX = otherX - otherW / 2;
+                const oMaxX = otherX + otherW / 2;
+                const oMinY = otherY;
+                const oMaxY = otherY + otherH;
+                const oMinZ = otherZ - otherD / 2;
+                const oMaxZ = otherZ + otherD / 2;
 
-                const myBox = { x: newX - worldW / 2, z: newZ - worldD / 2, w: worldW, d: worldD };
-                const otherBox = { x: otherX - otherW / 2, z: otherZ - otherD / 2, w: otherW, d: otherD };
+                // On vérifie si les "boîtes" se touchent sur les 3 axes en même temps
+                const intersectX = myMinX < oMaxX - 0.005 && myMaxX > oMinX + 0.005;
+                const intersectY = myMinY < oMaxY - 0.005 && myMaxY > oMinY + 0.005; // C'est l'axe qui manquait !
+                const intersectZ = myMinZ < oMaxZ - 0.005 && myMaxZ > oMinZ + 0.005;
 
-                if (
-                    myBox.x < otherBox.x + otherBox.w - 0.01 &&
-                    myBox.x + myBox.w > otherBox.x + 0.01 &&
-                    myBox.z < otherBox.z + otherBox.d - 0.01 &&
-                    myBox.z + myBox.d > otherBox.z + 0.01
-                ) {
-                    hasCollision = true;
+                if (intersectX && intersectY && intersectZ) {
+                    currentCollision = true;
                 }
             });
 
-            if (hasCollision) {
-                newX = lastValidPos.current.x;
-                newZ = lastValidPos.current.z;
-            } else {
+            if (currentCollision !== isColliding) setIsColliding(currentCollision);
+
+            if (!currentCollision) {
                 lastValidPos.current = { x: newX, z: newZ };
             }
 
@@ -153,11 +175,23 @@ const DraggableCaisson = ({ position, dimensions, isSelected, id, config, type }
         if (last) {
             setDraggedId(null);
             if (controls) controls.enabled = true;
+            
+            let finalX = meshRef.current.position.x;
+            let finalZ = meshRef.current.position.z;
+
+            // Retour automatique si on lâche en collision
+            if (isColliding) {
+                finalX = lastValidPos.current.x;
+                finalZ = lastValidPos.current.z;
+                meshRef.current.position.set(finalX, meshRef.current.position.y, finalZ);
+                setIsColliding(false);
+            }
+
             if (meshRef.current) {
-                updateItemPosition(id, [meshRef.current.position.x * 1000, meshRef.current.position.y * 1000, meshRef.current.position.z * 1000]);
+                updateItemPosition(id, [finalX * 1000, meshRef.current.position.y * 1000, finalZ * 1000]);
             }
         }
-    });
+    });     
 
     return (
         <group ref={meshRef} {...bind()} position={[position[0] / 1000, position[1] / 1000, position[2] / 1000]} rotation={[0, rotationRad, 0]}>
@@ -171,6 +205,7 @@ const DraggableCaisson = ({ position, dimensions, isSelected, id, config, type }
                     hauteur={dimensions.height}
                     profondeur={dimensions.depth}
                     isSelected={isSelected}
+                    isColliding={isColliding}
                     type={type}
                     couleurExt={config.couleurExt}
                     couleurInt={config.couleurInt} 
@@ -178,7 +213,6 @@ const DraggableCaisson = ({ position, dimensions, isSelected, id, config, type }
                     isTiroirsInterieurs={config.isTiroirsInterieurs}
                     equipement={config.equipement}
                     couleurPlanTravail={config.couleurPlanTravail}
-                    onClick={(e) => e.stopPropagation()}
                 />
             </group>
         </group>
@@ -323,16 +357,13 @@ const Sidebar = () => {
 
     return (
         <div style={theme.panel}>
-            {/* HEADER */}
             <div style={theme.header}>
                 <h1 style={theme.titleH1}>Cuisine Studio 3D</h1>
                 <p style={theme.subtitle}>Configurez votre espace sur mesure</p>
             </div>
 
-            {/* SCROLL AREA */}
             <div style={theme.scrollArea}>
                 
-                {/* PROJET */}
                 <div style={{...theme.card, border: "1px solid #e0e7ff", background: "#f8fafc"}}>
                     <h3 style={{...theme.sectionTitle, color: "#6366f1"}}>📁 Projet</h3>
                     <div style={theme.buttonRow}>
@@ -342,7 +373,6 @@ const Sidebar = () => {
                     </div>
                 </div>
 
-                {/* ESPACE 3D */}
                 <div style={theme.card}>
                     <h3 style={theme.sectionTitle}>📐 Dimensions de la pièce</h3>
                     <label style={theme.label}>Largeur (mm)</label>
@@ -359,7 +389,6 @@ const Sidebar = () => {
                     <input type="color" value={room.wallColor} onChange={(e) => updateRoom({ wallColor: e.target.value })} style={theme.colorPicker} />
                 </div>
 
-                {/* CATALOGUE */}
                 <div style={theme.card}>
                     <h3 style={theme.sectionTitle}>📦 Catalogue de meubles</h3>
                     <button onClick={() => generateCabinet("base_cabinet", { width: 600, height: 812, depth: 600 })} style={theme.btnPrimary}>+ Meuble Bas</button>
@@ -368,7 +397,6 @@ const Sidebar = () => {
                     <button onClick={handleAddIsland} style={theme.btnIsland}>+ Créer un Îlot Central</button>
                 </div>
 
-                {/* EDITION DU CAISSON SELECTIONNE */}
                 {selectedItem && (
                     <div style={{...theme.card, border: "2px solid #3b82f6", background: "#f0f9ff"}}>
                         <h3 style={{...theme.sectionTitle, color: "#1d4ed8"}}>⚙️ Modifier la sélection</h3>
@@ -419,7 +447,6 @@ const Sidebar = () => {
                             </label>
                         )}
 
-                        {/* NOUVEAU : GESTION DES ÉQUIPEMENTS (Meubles Bas ET Colonnes) */}
                         {(selectedItem.type === "base_cabinet" || selectedItem.type === "island" || selectedItem.type === "tall_cabinet") && (
                             <div style={{ marginTop: "20px", paddingTop: "20px", borderTop: "1px solid #cbd5e1" }}>
                                 <label style={{...theme.label, marginTop: 0}}>Équipement intégré</label>
