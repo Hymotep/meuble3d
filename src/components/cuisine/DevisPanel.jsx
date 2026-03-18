@@ -23,13 +23,13 @@ const DevisPanel = () => {
 
     return (
         <div style={theme.devisPanel}>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px", borderBottom: "1px solid #374151", paddingBottom: "8px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", borderBottom: "1px solid #000000", paddingBottom: "8px" }}>
                 <Icons.Cart />
-                <span style={{ fontSize: "14px", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.05em", color: "#9ca3af" }}>
+                <span style={{ fontSize: "14px", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.05em", color: "#030303" }}>
                     Devis Estimatif
                 </span>
             </div>
-            <div style={{ fontSize: "28px", fontWeight: "700", color: "#10b981", marginTop: "4px" }}>
+            <div style={{ fontSize: "28px", fontWeight: "700", color: "#000000", marginTop: "4px" }}>
                 {total.toLocaleString("fr-FR")} €
             </div>
             <div style={{ fontSize: "11px", color: "#6b7280" }}>
