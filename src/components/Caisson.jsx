@@ -40,7 +40,6 @@ export function Caisson({
 		"/textures/oak/chene_roughness.jpg",
 	]);
 
-	// eslint-disable-next-line react-hooks/immutability
 	colorMap.colorSpace = THREE.SRGBColorSpace;
 
 	const [isHovered, setIsHovered] = useState(false);

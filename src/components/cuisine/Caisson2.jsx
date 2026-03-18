@@ -1,5 +1,6 @@
-import React from "react";
-import { Edges } from "@react-three/drei";
+import React, { useMemo, useEffect } from "react";
+import * as THREE from "three";
+import { useTexture, Edges } from "@react-three/drei";
 
 export const Caisson2 = ({
     largeur = 600,
@@ -14,8 +15,56 @@ export const Caisson2 = ({
     type = "base_cabinet",
     couleurPlanTravail = "#daba9e",
     isTiroirsInterieurs = false,
-    equipement = "none" 
+    equipement = "none",
+    useTextures = false
 }) => {
+    
+    // --- CHARGEMENT DES TEXTURES PBR ---
+    const textures = useTexture({
+        woodMap: "public/textures/oak/chene_color.jpg",
+        woodRough: "public/textures/oak/chene_roughness.jpg",
+        woodNormal: "public/textures/oak/chene_normal.jpg",
+        marbleMap: "public/textures/oak/chene_color.jpg",
+        marbleRough: "public/textures/oak/chene_color.jpg",
+        metalNormal: "public/textures/oak/chene_color.jpg",
+    });
+
+    // Configure texture wrapping - textures from useTexture are mutable
+    useEffect(() => {
+        textures.woodMap.wrapS = textures.woodMap.wrapT = THREE.RepeatWrapping;
+        textures.woodMap.repeat.set(1, 2);
+        textures.woodNormal.wrapS = textures.woodNormal.wrapT = THREE.RepeatWrapping;
+        textures.woodNormal.repeat.set(1, 2);
+    }, [textures]);
+
+    // --- MATÉRIAUX CONDITIONNELS ---
+    const facadeMaterial = useMemo(() => new THREE.MeshStandardMaterial({
+        color: useTextures ? "#ffffff" : couleurExt,
+        map: useTextures ? textures.woodMap : null,
+        roughnessMap: useTextures ? textures.woodRough : null,
+        normalMap: useTextures ? textures.woodNormal : null,
+        normalScale: useTextures ? new THREE.Vector2(0.5, 0.5) : new THREE.Vector2(0, 0),
+        roughness: useTextures ? 0.7 : 0.4,
+        metalness: 0.05,
+    }), [textures, useTextures, couleurExt]);
+
+    const worktopMaterial = useMemo(() => new THREE.MeshStandardMaterial({
+        color: useTextures ? "#ffffff" : couleurPlanTravail,
+        map: useTextures ? textures.marbleMap : null,
+        roughnessMap: useTextures ? textures.marbleRough : null,
+        roughness: useTextures ? 0.1 : 0.4,
+        metalness: 0.0,
+        envMapIntensity: useTextures ? 1.5 : 1.0,
+    }), [textures, useTextures, couleurPlanTravail]);
+
+    const handleMaterial = useMemo(() => new THREE.MeshStandardMaterial({
+        color: useTextures ? "#d1d5db" : couleurPoignees,
+        normalMap: useTextures ? textures.metalNormal : null,
+        normalScale: useTextures ? new THREE.Vector2(1.5, 1.5) : new THREE.Vector2(0, 0),
+        roughness: useTextures ? 0.3 : 0.2,
+        metalness: useTextures ? 1.0 : 0.8,
+    }), [textures, useTextures, couleurPoignees]);
+
     const w = largeur / 1000;
     const h = hauteur / 1000;
     const d = profondeur / 1000;
@@ -44,7 +93,7 @@ export const Caisson2 = ({
 
         return (
             <group position={[w / 2, h / 2, d / 2]}>
-                <mesh position={[0, bottomY + plintheH / 2, bodyZ - 0.02]}><boxGeometry args={[w - 0.04, plintheH, bodyD - 0.04]} /><meshStandardMaterial color="#1f2937" roughness={0.9} /></mesh>
+                <mesh position={[0, bottomY + plintheH / 2, bodyZ - 0.02]}><boxGeometry args={[w - 0.04, plintheH, bodyD - 0.04]} /><primitive object={facadeMaterial} attach="material" /></mesh>
                 <mesh position={[0, bottomY + plintheH + corpsH / 2, bodyZ]}><boxGeometry args={[w - 0.042, corpsH - 0.002, bodyD - 0.022]} /><meshStandardMaterial color={couleurInt} roughness={0.9} /></mesh>
                 <mesh position={[0, bottomY + plintheH + corpsH / 2, bodyZ - bodyD / 2 - 0.01]}><boxGeometry args={[w, corpsH, 0.02]} /><meshStandardMaterial color={couleurInt} roughness={0.3} /></mesh>
                 <mesh position={[-w/2 + 0.01, bottomY + plintheH + corpsH / 2, bodyZ]}><boxGeometry args={[0.02, corpsH, bodyD]} /><meshStandardMaterial color={couleurInt} roughness={0.3} /></mesh>
@@ -54,21 +103,22 @@ export const Caisson2 = ({
                     const cx = startX + i * (colW + gap);
                     return (
                         <group key={i}>
-                            <mesh position={[cx, bottomY + plintheH + corpsH*0.85, bodyZ + bodyD/2 + doorThickness/2 + 0.002]}><boxGeometry args={[colW, corpsH*0.3 - gap, doorThickness]} /><meshStandardMaterial color={couleurExt} roughness={0.3} /></mesh>
-                            <mesh position={[cx, bottomY + plintheH + corpsH*0.35, bodyZ + bodyD/2 + doorThickness/2 + 0.002]}><boxGeometry args={[colW, corpsH*0.7 - gap, doorThickness]} /><meshStandardMaterial color={couleurExt} roughness={0.3} /></mesh>
+                            <mesh position={[cx, bottomY + plintheH + corpsH*0.85, bodyZ + bodyD/2 + doorThickness/2 + 0.002]}><boxGeometry args={[colW, corpsH*0.3 - gap, doorThickness]} /><primitive object={facadeMaterial} attach="material" /></mesh>
+                            <mesh position={[cx, bottomY + plintheH + corpsH*0.35, bodyZ + bodyD/2 + doorThickness/2 + 0.002]}><boxGeometry args={[colW, corpsH*0.7 - gap, doorThickness]} /><primitive object={facadeMaterial} attach="material" /></mesh>
                             {avecPoignees && (
                                 <>
-                                    <mesh position={[cx, bottomY + plintheH + corpsH*0.85 + 0.05, bodyZ + bodyD/2 + doorThickness + 0.015]}><boxGeometry args={[colW * 0.5, 0.01, 0.02]} /><meshStandardMaterial color={couleurPoignees} metalness={0.7} /></mesh>
-                                    <mesh position={[cx, bottomY + plintheH + corpsH*0.35 + 0.25, bodyZ + bodyD/2 + doorThickness + 0.015]}><boxGeometry args={[colW * 0.5, 0.01, 0.02]} /><meshStandardMaterial color={couleurPoignees} metalness={0.7} /></mesh>
+                                    <mesh position={[cx, bottomY + plintheH + corpsH*0.85 + 0.05, bodyZ + bodyD/2 + doorThickness + 0.015]}><boxGeometry args={[colW * 0.5, 0.01, 0.02]} /><primitive object={handleMaterial} attach="material" /></mesh>
+                                    <mesh position={[cx, bottomY + plintheH + corpsH*0.35 + 0.25, bodyZ + bodyD/2 + doorThickness + 0.015]}><boxGeometry args={[colW * 0.5, 0.01, 0.02]} /><primitive object={handleMaterial} attach="material" /></mesh>
                                 </>
                             )}
                         </group>
                     );
                 })}
 
-                {/* RETOUR DU PLAN DE TRAVAIL SUR L'ÎLOT */}
-                <mesh position={[0, bottomY + plintheH + corpsH + planH / 2, 0]}><boxGeometry args={[w + 0.04, planH, d + 0.04]} /><meshStandardMaterial color={couleurPlanTravail} roughness={0.4} /></mesh>
+                {/* Plan de travail de l'îlot */}
+                <mesh position={[0, bottomY + plintheH + corpsH + planH / 2, 0]}><boxGeometry args={[w + 0.04, planH, d + 0.04]} /><primitive object={worktopMaterial} attach="material" /></mesh>
 
+                {/* Équipements Îlot */}
                 {equipement === "sink" && (
                     <group position={[0, bottomY + plintheH + corpsH + planH + 0.006, bodyZ]}>
                         <mesh position={[0, 0, 0]}><boxGeometry args={[0.7, 0.01, 0.45]} /><meshStandardMaterial color="#9ca3af" metalness={0.8} roughness={0.2} /></mesh>
@@ -109,7 +159,7 @@ export const Caisson2 = ({
             {(isBase || isTall) && (
                 <mesh position={[0, bottomY + plintheH / 2, -0.02]}>
                     <boxGeometry args={[w, plintheH, d - 0.04]} />
-                    <meshStandardMaterial color="#1f2937" roughness={0.9} />
+                    <primitive object={facadeMaterial} attach="material" />
                 </mesh>
             )}
 
@@ -121,9 +171,10 @@ export const Caisson2 = ({
 
             {isTall && equipement === "oven_microwave" ? (
                 <group>
-                    <mesh position={[0, bottomY + plintheH + bottomDoorH/2, doorZ]}><boxGeometry args={[w - gap, bottomDoorH - gap, doorThickness]} /><meshStandardMaterial color={couleurExt} roughness={0.3} /></mesh>
-                    {avecPoignees && <mesh position={[0, bottomY + plintheH + bottomDoorH - 0.06, doorZ + 0.015]}><boxGeometry args={[w * 0.4, 0.01, 0.02]} /><meshStandardMaterial color={couleurPoignees} metalness={0.7} /></mesh>}
+                    <mesh position={[0, bottomY + plintheH + bottomDoorH/2, doorZ]}><boxGeometry args={[w - gap, bottomDoorH - gap, doorThickness]} /><primitive object={facadeMaterial} attach="material" /></mesh>
+                    {avecPoignees && <mesh position={[0, bottomY + plintheH + bottomDoorH - 0.06, doorZ + 0.015]}><boxGeometry args={[w * 0.4, 0.01, 0.02]} /><primitive object={handleMaterial} attach="material" /></mesh>}
 
+                    {/* FOURS RESTAURÉS */}
                     <group position={[0, bottomY + plintheH + bottomDoorH + ovenH/2, doorZ]}>
                         <mesh><boxGeometry args={[w - gap, ovenH - gap, doorThickness]} /><meshStandardMaterial color="#111827" /></mesh>
                         <mesh position={[0, -0.05, 0.004]}><boxGeometry args={[w * 0.8, ovenH * 0.6, doorThickness]} /><meshStandardMaterial color="#000000" metalness={0.8} roughness={0.1} /></mesh>
@@ -137,36 +188,37 @@ export const Caisson2 = ({
                         <mesh position={[w * 0.35, 0.1, 0.006]}><boxGeometry args={[w * 0.1, 0.05, doorThickness]} /><meshBasicMaterial color="#34d399" /></mesh>
                     </group>
 
-                    <mesh position={[0, bottomY + plintheH + bottomDoorH + ovenH + mwH + topDoorH/2, doorZ]}><boxGeometry args={[w - gap, topDoorH - gap, doorThickness]} /><meshStandardMaterial color={couleurExt} roughness={0.3} /></mesh>
-                    {avecPoignees && <mesh position={[0, bottomY + plintheH + bottomDoorH + ovenH + mwH + 0.06, doorZ + 0.015]}><boxGeometry args={[w * 0.4, 0.01, 0.02]} /><meshStandardMaterial color={couleurPoignees} metalness={0.7} /></mesh>}
+                    <mesh position={[0, bottomY + plintheH + bottomDoorH + ovenH + mwH + topDoorH/2, doorZ]}><boxGeometry args={[w - gap, topDoorH - gap, doorThickness]} /><primitive object={facadeMaterial} attach="material" /></mesh>
+                    {avecPoignees && <mesh position={[0, bottomY + plintheH + bottomDoorH + ovenH + mwH + 0.06, doorZ + 0.015]}><boxGeometry args={[w * 0.4, 0.01, 0.02]} /><primitive object={handleMaterial} attach="material" /></mesh>}
                 </group>
 
             ) : !isTiroirsInterieurs ? (
                 <group>
-                    <mesh position={[0, bottomY + plintheH + corpsH / 2, doorZ]}><boxGeometry args={[w - gap, corpsH - gap, doorThickness]} /><meshStandardMaterial color={couleurExt} roughness={0.3} metalness={0.1} /><Edges color="#000000" opacity={0.1} transparent /></mesh>
-                    {avecPoignees && <mesh position={[0, bottomY + plintheH + corpsH / 2 + (isBase ? (corpsH / 2 - 0.06) : (-corpsH / 2 + 0.06)), doorZ + 0.015]}><boxGeometry args={[w * 0.4, 0.01, 0.02]} /><meshStandardMaterial color={couleurPoignees} metalness={0.7} roughness={0.2} /></mesh>}
+                    <mesh position={[0, bottomY + plintheH + corpsH / 2, doorZ]}><boxGeometry args={[w - gap, corpsH - gap, doorThickness]} /><primitive object={facadeMaterial} attach="material" /><Edges color="#000000" opacity={0.1} transparent /></mesh>
+                    {avecPoignees && <mesh position={[0, bottomY + plintheH + corpsH / 2 + (isBase ? (corpsH / 2 - 0.06) : (-corpsH / 2 + 0.06)), doorZ + 0.015]}><boxGeometry args={[w * 0.4, 0.01, 0.02]} /><primitive object={handleMaterial} attach="material" /></mesh>}
                 </group>
             ) : (
                 <group>
-                    <mesh position={[0, bottomY + plintheH + t3H + t2H + t1H/2, doorZ]}><boxGeometry args={[w - gap, t1H - gap, doorThickness]} /><meshStandardMaterial color={couleurExt} roughness={0.3} /><Edges color="#000000" opacity={0.1} transparent /></mesh>
-                    {avecPoignees && <mesh position={[0, bottomY + plintheH + t3H + t2H + t1H/2, doorZ + 0.015]}><boxGeometry args={[w * 0.4, 0.01, 0.02]} /><meshStandardMaterial color={couleurPoignees} metalness={0.7} /></mesh>}
+                    <mesh position={[0, bottomY + plintheH + t3H + t2H + t1H/2, doorZ]}><boxGeometry args={[w - gap, t1H - gap, doorThickness]} /><primitive object={facadeMaterial} attach="material" /><Edges color="#000000" opacity={0.1} transparent /></mesh>
+                    {avecPoignees && <mesh position={[0, bottomY + plintheH + t3H + t2H + t1H/2, doorZ + 0.015]}><boxGeometry args={[w * 0.4, 0.01, 0.02]} /><primitive object={handleMaterial} attach="material" /></mesh>}
 
-                    <mesh position={[0, bottomY + plintheH + t3H + t2H/2, doorZ]}><boxGeometry args={[w - gap, t2H - gap, doorThickness]} /><meshStandardMaterial color={couleurExt} roughness={0.3} /><Edges color="#000000" opacity={0.1} transparent /></mesh>
-                    {avecPoignees && <mesh position={[0, bottomY + plintheH + t3H + t2H/2 + 0.1, doorZ + 0.015]}><boxGeometry args={[w * 0.4, 0.01, 0.02]} /><meshStandardMaterial color={couleurPoignees} metalness={0.7} /></mesh>}
+                    <mesh position={[0, bottomY + plintheH + t3H + t2H/2, doorZ]}><boxGeometry args={[w - gap, t2H - gap, doorThickness]} /><primitive object={facadeMaterial} attach="material" /><Edges color="#000000" opacity={0.1} transparent /></mesh>
+                    {avecPoignees && <mesh position={[0, bottomY + plintheH + t3H + t2H/2 + 0.1, doorZ + 0.015]}><boxGeometry args={[w * 0.4, 0.01, 0.02]} /><primitive object={handleMaterial} attach="material" /></mesh>}
 
-                    <mesh position={[0, bottomY + plintheH + t3H/2, doorZ]}><boxGeometry args={[w - gap, t3H - gap, doorThickness]} /><meshStandardMaterial color={couleurExt} roughness={0.3} /><Edges color="#000000" opacity={0.1} transparent /></mesh>
-                    {avecPoignees && <mesh position={[0, bottomY + plintheH + t3H/2 + 0.1, doorZ + 0.015]}><boxGeometry args={[w * 0.4, 0.01, 0.02]} /><meshStandardMaterial color={couleurPoignees} metalness={0.7} /></mesh>}
+                    <mesh position={[0, bottomY + plintheH + t3H/2, doorZ]}><boxGeometry args={[w - gap, t3H - gap, doorThickness]} /><primitive object={facadeMaterial} attach="material" /><Edges color="#000000" opacity={0.1} transparent /></mesh>
+                    {avecPoignees && <mesh position={[0, bottomY + plintheH + t3H/2 + 0.1, doorZ + 0.015]}><boxGeometry args={[w * 0.4, 0.01, 0.02]} /><primitive object={handleMaterial} attach="material" /></mesh>}
                 </group>
             )}
 
-            {/* RETOUR DU PLAN DE TRAVAIL SUR LE CAISSON BAS */}
+            {/* Plan de Travail Caisson Bas */}
             {isBase && (
                 <mesh position={[0, bottomY + plintheH + corpsH + planH / 2, 0.01]}>
                     <boxGeometry args={[w + 0.002, planH, d + 0.02]} />
-                    <meshStandardMaterial color={couleurPlanTravail} roughness={0.6} />
+                    <primitive object={worktopMaterial} attach="material" />
                 </mesh>
             )}
 
+            {/* ÉQUIPEMENTS CAISSON BAS RESTAURÉS */}
             {isBase && equipement === "sink" && (
                 <group position={[0, bottomY + plintheH + corpsH + planH + 0.006, 0.05]}>
                     <mesh position={[0, 0, 0]}><boxGeometry args={[w * 0.8, 0.01, d * 0.7]} /><meshStandardMaterial color="#9ca3af" metalness={0.8} roughness={0.2} /></mesh>

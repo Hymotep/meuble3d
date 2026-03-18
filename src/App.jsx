@@ -59,7 +59,7 @@ const CameraController = ({ items = [], roomDims = null }) => {
 		targetPosition.current.set(0, Math.max(size.y * 0.5, 1), finalDistance);
 		targetLookAt.current.set(center.x, size.y * 0.3, center.z);
 
-	}, [items, roomDims]);
+	}, [items, roomDims]); // eslint-disable-line react-hooks/exhaustive-deps
 
 	useFrame(() => {
 		const lerpFactor = 0.03;
@@ -77,8 +77,6 @@ const CameraController = ({ items = [], roomDims = null }) => {
 };
 
 const DressingScene = () => {
-	const parentRef = useRef();
-
 	return (
 		<>
 
