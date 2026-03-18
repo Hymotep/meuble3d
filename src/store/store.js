@@ -6,6 +6,10 @@ export const useStore = create((set) => ({
     selectedId: null,
     draggedId: null,
 
+    // --- NOUVEAU : GESTION DE LA VUE 2D/3D ---
+    viewMode: "3D", 
+    setViewMode: (mode) => set({ viewMode: mode }),
+
     updateRoom: (newSettings) => set((state) => ({ 
         room: { ...state.room, ...newSettings } 
     })),
@@ -26,7 +30,7 @@ export const useStore = create((set) => ({
         items: state.items.map(item => item.id === id ? { ...item, config: { ...item.config, ...newConfig } } : item)
     })),
 
-    // --- NOUVEAU : LOGIQUE DE REPOUSSEMENT INTELLIGENT ---
+    // --- LOGIQUE DE REPOUSSEMENT INTELLIGENT ---
     updateItemDimensions: (id, newDimensions) => set((state) => {
         const targetItem = state.items.find(i => i.id === id);
         if (!targetItem) return state;
@@ -57,7 +61,6 @@ export const useStore = create((set) => ({
             let nz = item.position[2];
 
             // DÉCALAGE HORIZONTAL (Axe X)
-            // Si l'objet voisin est sur la même ligne (tolérance sur la profondeur)
             if (Math.abs(item.position[2] - targetItem.position[2]) < (oldWorldD / 2 + 50)) {
                 if (deltaX !== 0) {
                     if (item.position[0] > targetItem.position[0] + 10) nx += deltaX / 2; // Pousse vers la droite
@@ -66,7 +69,6 @@ export const useStore = create((set) => ({
             }
 
             // DÉCALAGE VERTICAL (Axe Z - Pour les meubles pivotés)
-            // Si l'objet voisin est dans la même colonne (tolérance sur la largeur)
             if (Math.abs(item.position[0] - targetItem.position[0]) < (oldWorldW / 2 + 50)) {
                 if (deltaZ !== 0) {
                     if (item.position[2] > targetItem.position[2] + 10) nz += deltaZ / 2; // Pousse vers l'avant
@@ -74,7 +76,7 @@ export const useStore = create((set) => ({
                 }
             }
 
-            // SÉCURITÉ : On bloque les meubles poussés contre les murs pour qu'ils ne sortent pas de la pièce
+            // SÉCURITÉ : On bloque les meubles poussés contre les murs
             const itemIsRotated = item.rotation === 90 || item.rotation === 270;
             const itemW = itemIsRotated ? item.dimensions.depth : item.dimensions.width;
             const itemD = itemIsRotated ? item.dimensions.width : item.dimensions.depth;

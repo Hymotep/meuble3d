@@ -6,7 +6,7 @@ export const Caisson2 = ({
     hauteur = 812,
     profondeur = 600,
     isSelected = false,
-    isColliding = false, // NOUVEAU : Prop pour le retour visuel de collision
+    isColliding = false,
     couleurExt = "#ffffff",
     couleurInt = "#e5e7eb",
     avecPoignees = true,
@@ -66,6 +66,7 @@ export const Caisson2 = ({
                     );
                 })}
 
+                {/* RETOUR DU PLAN DE TRAVAIL SUR L'ÎLOT */}
                 <mesh position={[0, bottomY + plintheH + corpsH + planH / 2, 0]}><boxGeometry args={[w + 0.04, planH, d + 0.04]} /><meshStandardMaterial color={couleurPlanTravail} roughness={0.4} /></mesh>
 
                 {equipement === "sink" && (
@@ -158,6 +159,7 @@ export const Caisson2 = ({
                 </group>
             )}
 
+            {/* RETOUR DU PLAN DE TRAVAIL SUR LE CAISSON BAS */}
             {isBase && (
                 <mesh position={[0, bottomY + plintheH + corpsH + planH / 2, 0.01]}>
                     <boxGeometry args={[w + 0.002, planH, d + 0.02]} />
