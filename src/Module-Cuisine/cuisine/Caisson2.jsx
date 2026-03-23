@@ -1,3 +1,17 @@
+/**
+ * ============================================================================
+ * CAISSON 2 (CABINET) COMPONENT
+ * ============================================================================
+ * * Highly configurable 3D cabinet component for the kitchen configurator.
+ * Contains:
+ * - Dynamic dimension calculations (width, height, depth)
+ * - PBR Texture loading and wrapping setup
+ * - Conditional material generation (solid colors vs. realistic textures)
+ * - Multiple structural variants: Island, Base Cabinet, and Tall Cabinet
+ * - Integrated equipment logic (Oven/Microwave, Sink, Cooktop)
+ * - Visual feedback for interactive states (Selected, Colliding)
+ */
+
 import React, { useMemo, useEffect } from "react";
 import * as THREE from "three";
 import { useTexture, Edges } from "@react-three/drei";
@@ -19,7 +33,8 @@ export const Caisson2 = ({
     useTextures = false
 }) => {
     
-    // --- CHARGEMENT DES TEXTURES PBR ---
+    // Load PBR textures for realistic rendering
+    // These are applied conditionally based on the useTextures prop
     const textures = useTexture({
         woodMap: "public/textures/oak/chene_color.jpg",
         woodRough: "public/textures/oak/chene_roughness.jpg",
@@ -29,7 +44,8 @@ export const Caisson2 = ({
         metalNormal: "public/textures/oak/chene_color.jpg",
     });
 
-    // Configure texture wrapping - textures from useTexture are mutable
+    // Configure texture wrapping behavior
+    // Textures from useTexture are mutable, allowing us to set RepeatWrapping
     useEffect(() => {
         textures.woodMap.wrapS = textures.woodMap.wrapT = THREE.RepeatWrapping;
         textures.woodMap.repeat.set(1, 2);
@@ -37,7 +53,8 @@ export const Caisson2 = ({
         textures.woodNormal.repeat.set(1, 2);
     }, [textures]);
 
-    // --- MATÉRIAUX CONDITIONNELS ---
+    // Memoized facade material to prevent unnecessary recalculations
+    // Switches between standard colors and PBR wood textures
     const facadeMaterial = useMemo(() => new THREE.MeshStandardMaterial({
         color: useTextures ? "#ffffff" : couleurExt,
         map: useTextures ? textures.woodMap : null,
@@ -48,6 +65,7 @@ export const Caisson2 = ({
         metalness: 0.05,
     }), [textures, useTextures, couleurExt]);
 
+    // Memoized worktop material 
     const worktopMaterial = useMemo(() => new THREE.MeshStandardMaterial({
         color: useTextures ? "#ffffff" : couleurPlanTravail,
         map: useTextures ? textures.marbleMap : null,
@@ -57,6 +75,7 @@ export const Caisson2 = ({
         envMapIntensity: useTextures ? 1.5 : 1.0,
     }), [textures, useTextures, couleurPlanTravail]);
 
+    // Memoized handle material
     const handleMaterial = useMemo(() => new THREE.MeshStandardMaterial({
         color: useTextures ? "#d1d5db" : couleurPoignees,
         normalMap: useTextures ? textures.metalNormal : null,
@@ -65,40 +84,53 @@ export const Caisson2 = ({
         metalness: useTextures ? 1.0 : 0.8,
     }), [textures, useTextures, couleurPoignees]);
 
+    // Convert dimensions from millimeters to meters for Three.js scaling
     const w = largeur / 1000;
     const h = hauteur / 1000;
     const d = profondeur / 1000;
 
+    // Standard structural constants
     const doorThickness = 0.02;
     const gap = 0.004;
 
+    // Component type flags
     const isBase = type === "base_cabinet";
     const isTall = type === "tall_cabinet";
     const isIsland = type === "island";
     
+    // Calculate vertical segmentation
     const plintheH = (isBase || isTall || isIsland) ? 0.15 : 0; 
     const planH = (isBase || isIsland) ? 0.038 : 0; 
     const corpsH = h - plintheH - planH; 
-    
     const bottomY = -h / 2;
 
-    // --- 1. RENDU DE L'ÎLOT CENTRAL PREMIUM ---
+    // ============================================================================
+    // 1. PREMIUM ISLAND RENDERING (ÎLOT CENTRAL)
+    // ============================================================================
     if (isIsland) {
         const bodyD = d * 0.65; 
         const bodyZ = (d / 2) - (bodyD / 2);
 
+        // Determine column count based on island width
         const nbCols = w > 1.5 ? 3 : 2; 
         const colW = (w - (gap * (nbCols + 1))) / nbCols;
         const startX = -w / 2 + colW / 2 + gap;
 
         return (
             <group position={[w / 2, h / 2, d / 2]}>
+                
+                {/* ======================== */}
+                {/* ISLAND BASE & STRUCTURE */}
+                {/* ======================== */}
                 <mesh position={[0, bottomY + plintheH / 2, bodyZ - 0.02]}><boxGeometry args={[w - 0.04, plintheH, bodyD - 0.04]} /><primitive object={facadeMaterial} attach="material" /></mesh>
                 <mesh position={[0, bottomY + plintheH + corpsH / 2, bodyZ]}><boxGeometry args={[w - 0.042, corpsH - 0.002, bodyD - 0.022]} /><meshStandardMaterial color={couleurInt} roughness={0.9} /></mesh>
                 <mesh position={[0, bottomY + plintheH + corpsH / 2, bodyZ - bodyD / 2 - 0.01]}><boxGeometry args={[w, corpsH, 0.02]} /><meshStandardMaterial color={couleurInt} roughness={0.3} /></mesh>
                 <mesh position={[-w/2 + 0.01, bottomY + plintheH + corpsH / 2, bodyZ]}><boxGeometry args={[0.02, corpsH, bodyD]} /><meshStandardMaterial color={couleurInt} roughness={0.3} /></mesh>
                 <mesh position={[w/2 - 0.01, bottomY + plintheH + corpsH / 2, bodyZ]}><boxGeometry args={[0.02, corpsH, bodyD]} /><meshStandardMaterial color={couleurInt} roughness={0.3} /></mesh>
 
+                {/* ======================== */}
+                {/* ISLAND COLUMNS & DOORS */}
+                {/* ======================== */}
                 {Array.from({ length: nbCols }).map((_, i) => {
                     const cx = startX + i * (colW + gap);
                     return (
@@ -115,10 +147,14 @@ export const Caisson2 = ({
                     );
                 })}
 
-                {/* Plan de travail de l'îlot */}
+                {/* ======================== */}
+                {/* ISLAND WORKTOP */}
+                {/* ======================== */}
                 <mesh position={[0, bottomY + plintheH + corpsH + planH / 2, 0]}><boxGeometry args={[w + 0.04, planH, d + 0.04]} /><primitive object={worktopMaterial} attach="material" /></mesh>
 
-                {/* Équipements Îlot */}
+                {/* ======================== */}
+                {/* ISLAND EQUIPMENT */}
+                {/* ======================== */}
                 {equipement === "sink" && (
                     <group position={[0, bottomY + plintheH + corpsH + planH + 0.006, bodyZ]}>
                         <mesh position={[0, 0, 0]}><boxGeometry args={[0.7, 0.01, 0.45]} /><meshStandardMaterial color="#9ca3af" metalness={0.8} roughness={0.2} /></mesh>
@@ -133,6 +169,9 @@ export const Caisson2 = ({
                     </group>
                 )}
 
+                {/* ======================== */}
+                {/* ISLAND INTERACTION BOX */}
+                {/* ======================== */}
                 {(isSelected || isColliding) && (
                     <mesh position={[0, 0, 0]}>
                         <boxGeometry args={[w + 0.005, h + 0.005, d + 0.005]} />
@@ -143,7 +182,9 @@ export const Caisson2 = ({
         );
     }
 
-    // --- 2. RENDU D'UN MEUBLE CLASSIQUE / COLONNE ---
+    // ============================================================================
+    // 2. CLASSIC & TALL CABINET RENDERING
+    // ============================================================================
     const t1H = corpsH * 0.2;
     const t2H = corpsH * 0.4;
     const t3H = corpsH * 0.4;
@@ -156,6 +197,10 @@ export const Caisson2 = ({
 
     return (
         <group position={[w / 2, h / 2, d / 2]}>
+            
+            {/* ======================== */}
+            {/* BASE & BODY STRUCTURE */}
+            {/* ======================== */}
             {(isBase || isTall) && (
                 <mesh position={[0, bottomY + plintheH / 2, -0.02]}>
                     <boxGeometry args={[w, plintheH, d - 0.04]} />
@@ -169,18 +214,22 @@ export const Caisson2 = ({
                 <Edges color="#cccccc" opacity={0.5} transparent />
             </mesh>
 
+            {/* ======================== */}
+            {/* TALL CABINET W/ APPLIANCES */}
+            {/* ======================== */}
             {isTall && equipement === "oven_microwave" ? (
                 <group>
                     <mesh position={[0, bottomY + plintheH + bottomDoorH/2, doorZ]}><boxGeometry args={[w - gap, bottomDoorH - gap, doorThickness]} /><primitive object={facadeMaterial} attach="material" /></mesh>
                     {avecPoignees && <mesh position={[0, bottomY + plintheH + bottomDoorH - 0.06, doorZ + 0.015]}><boxGeometry args={[w * 0.4, 0.01, 0.02]} /><primitive object={handleMaterial} attach="material" /></mesh>}
 
-                    {/* FOURS RESTAURÉS */}
+                    {/* Oven Segment */}
                     <group position={[0, bottomY + plintheH + bottomDoorH + ovenH/2, doorZ]}>
                         <mesh><boxGeometry args={[w - gap, ovenH - gap, doorThickness]} /><meshStandardMaterial color="#111827" /></mesh>
                         <mesh position={[0, -0.05, 0.004]}><boxGeometry args={[w * 0.8, ovenH * 0.6, doorThickness]} /><meshStandardMaterial color="#000000" metalness={0.8} roughness={0.1} /></mesh>
                         <mesh position={[0, 0.2, 0.02]}><boxGeometry args={[w * 0.7, 0.015, 0.02]} /><meshStandardMaterial color="#d1d5db" metalness={0.8} /></mesh>
                     </group>
 
+                    {/* Microwave Segment */}
                     <group position={[0, bottomY + plintheH + bottomDoorH + ovenH + mwH/2, doorZ]}>
                         <mesh><boxGeometry args={[w - gap, mwH - gap, doorThickness]} /><meshStandardMaterial color="#111827" /></mesh>
                         <mesh position={[-w * 0.1, 0, 0.004]}><boxGeometry args={[w * 0.6, mwH * 0.7, doorThickness]} /><meshStandardMaterial color="#000000" metalness={0.8} roughness={0.1} /></mesh>
@@ -193,11 +242,19 @@ export const Caisson2 = ({
                 </group>
 
             ) : !isTiroirsInterieurs ? (
+                
+                // ======================== //
+                // SINGLE DOOR CABINET
+                // ======================== //
                 <group>
                     <mesh position={[0, bottomY + plintheH + corpsH / 2, doorZ]}><boxGeometry args={[w - gap, corpsH - gap, doorThickness]} /><primitive object={facadeMaterial} attach="material" /><Edges color="#000000" opacity={0.1} transparent /></mesh>
                     {avecPoignees && <mesh position={[0, bottomY + plintheH + corpsH / 2 + (isBase ? (corpsH / 2 - 0.06) : (-corpsH / 2 + 0.06)), doorZ + 0.015]}><boxGeometry args={[w * 0.4, 0.01, 0.02]} /><primitive object={handleMaterial} attach="material" /></mesh>}
                 </group>
             ) : (
+                
+                // ======================== //
+                // MULTI-DRAWER CABINET
+                // ======================== //
                 <group>
                     <mesh position={[0, bottomY + plintheH + t3H + t2H + t1H/2, doorZ]}><boxGeometry args={[w - gap, t1H - gap, doorThickness]} /><primitive object={facadeMaterial} attach="material" /><Edges color="#000000" opacity={0.1} transparent /></mesh>
                     {avecPoignees && <mesh position={[0, bottomY + plintheH + t3H + t2H + t1H/2, doorZ + 0.015]}><boxGeometry args={[w * 0.4, 0.01, 0.02]} /><primitive object={handleMaterial} attach="material" /></mesh>}
@@ -210,7 +267,9 @@ export const Caisson2 = ({
                 </group>
             )}
 
-            {/* Plan de Travail Caisson Bas */}
+            {/* ======================== */}
+            {/* BASE CABINET WORKTOP */}
+            {/* ======================== */}
             {isBase && (
                 <mesh position={[0, bottomY + plintheH + corpsH + planH / 2, 0.01]}>
                     <boxGeometry args={[w + 0.002, planH, d + 0.02]} />
@@ -218,7 +277,9 @@ export const Caisson2 = ({
                 </mesh>
             )}
 
-            {/* ÉQUIPEMENTS CAISSON BAS RESTAURÉS */}
+            {/* ======================== */}
+            {/* BASE CABINET EQUIPMENT */}
+            {/* ======================== */}
             {isBase && equipement === "sink" && (
                 <group position={[0, bottomY + plintheH + corpsH + planH + 0.006, 0.05]}>
                     <mesh position={[0, 0, 0]}><boxGeometry args={[w * 0.8, 0.01, d * 0.7]} /><meshStandardMaterial color="#9ca3af" metalness={0.8} roughness={0.2} /></mesh>
@@ -233,6 +294,9 @@ export const Caisson2 = ({
                 </group>
             )}
 
+            {/* ======================== */}
+            {/* INTERACTION BOUNDING BOX */}
+            {/* ======================== */}
             {(isSelected || isColliding) && (
                 <mesh position={[0, 0, 0]}>
                     <boxGeometry args={[w + 0.005, h + 0.005, d + 0.005]} />

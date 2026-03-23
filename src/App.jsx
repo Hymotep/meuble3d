@@ -4,8 +4,8 @@ import { OrbitControls, Grid, Center } from "@react-three/drei";
 import { Routes, Route, Link } from "react-router-dom";
 import * as THREE from "three";
 
-import { Parent } from "./components/Parent";
-import KitchenConfigurator from "./Scene";
+import { Parent } from "./Module-dressing/dressing/Parent";
+import KitchenConfigurator from "./Module-Cuisine/Scene";
 
 const CameraController = ({ items = [], roomDims = null }) => {
 	const { camera, controls } = useThree();
@@ -58,7 +58,6 @@ const CameraController = ({ items = [], roomDims = null }) => {
 
 		targetPosition.current.set(0, Math.max(size.y * 0.5, 1), finalDistance);
 		targetLookAt.current.set(center.x, size.y * 0.3, center.z);
-
 	}, [items, roomDims]); // eslint-disable-line react-hooks/exhaustive-deps
 
 	useFrame(() => {
@@ -79,13 +78,12 @@ const CameraController = ({ items = [], roomDims = null }) => {
 const DressingScene = () => {
 	return (
 		<>
-
 			<ambientLight intensity={0.6} />
 			<directionalLight position={[5, 5, 5]} intensity={0.8} />
 			<Center>
 				<Parent />
 			</Center>
-		
+
 			<OrbitControls
 				makeDefault
 				enableZoom={false}
@@ -103,16 +101,19 @@ export default function App() {
 	return (
 		<div style={{ width: "100vw", height: "100vh", background: "#e5e7eb" }}>
 			<Routes>
-				<Route path="/" element={
-					<>
-						<Link to="/cuisine" style={{ position: 'absolute', zIndex: 10, padding: '10px', background: 'white' }}>
-							Go to Kitchen Configurator
-						</Link>
-						<Canvas camera={{ position: [0, 1.5, 4], fov: 45 }}>
-							<DressingScene />
-						</Canvas>
-					</>
-				} />
+				<Route
+					path="/"
+					element={
+						<>
+							<Link to="/cuisine" style={{ position: "absolute", zIndex: 10, padding: "10px", background: "white" }}>
+								Go to Kitchen Configurator
+							</Link>
+							<Canvas camera={{ position: [0, 1.5, 4], fov: 45 }}>
+								<DressingScene />
+							</Canvas>
+						</>
+					}
+				/>
 				<Route path="/cuisine" element={<KitchenConfigurator />} />
 			</Routes>
 		</div>

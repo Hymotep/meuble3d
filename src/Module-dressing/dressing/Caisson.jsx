@@ -11,7 +11,7 @@ import {
 	calculateDoorScale,
 	createMaterial,
 	getZOffsetAndScale,
-} from "../utils";
+} from "../utils/index.js";
 import { renderPortes, doorAnimation } from "../utils/porteUtils.jsx";
 import { renderEtagere, renderPenderie, renderTiroirs, drawerAnimation } from "../utils/tiroirsUtils.jsx";
 
@@ -19,6 +19,7 @@ export function Caisson({
 	largeur,
 	hauteur,
 	profondeur,
+	doorsCount,
 	activeConfig,
 	isSelected,
 	onClick,
@@ -57,13 +58,21 @@ export function Caisson({
 		return createMaterial(finitionInt, couleurInt, colorMap, normalMap, roughnessMap);
 	}, [finitionInt, couleurInt, colorMap, normalMap, roughnessMap]);
 
-	const { scaleX_horizontales, scaleX_etagere, scaleZ_verticales, scaleZ_fond, scaleY_profondeur, deltaX, deltaY } = calculateScales(largeur, hauteur, profondeur);
+	const { scaleX_horizontales, scaleX_etagere, scaleZ_verticales, scaleZ_fond, scaleY_profondeur, deltaX, deltaY } = calculateScales(
+		largeur,
+		hauteur,
+		profondeur,
+	);
 
 	let nbTiroirs = getNbTiroirs(activeConfig);
 
 	const hasDrawersConfig = hasDrawers(activeConfig);
 
-	const { scaleX_tiroir_face, scaleX_tiroir_fond, scaleY_tiroir_prof, scaleZ_tiroir, HAUTEUR_BLOC_TIROIR } = calculateDrawerScales(largeur, profondeur, nbTiroirs);
+	const { scaleX_tiroir_face, scaleX_tiroir_fond, scaleY_tiroir_prof, scaleZ_tiroir, HAUTEUR_BLOC_TIROIR } = calculateDrawerScales(
+		largeur,
+		profondeur,
+		nbTiroirs,
+	);
 
 	const { scaleZ_demi_porte } = calculateDoorScale(hauteur);
 
@@ -74,11 +83,47 @@ export function Caisson({
 
 	const renderEtagereFn = (hauteurZ, key) => renderEtagere(nodes, matInt, EPAISSEUR, scaleX_etagere, scaleY_profondeur, hauteurZ, key);
 	const renderPenderieFn = (hauteurEtagere, key) => renderPenderie(largeur, EPAISSEUR, profondeur, hauteurEtagere, key);
-	const renderTiroirsFn = () => renderTiroirs(nodes, matInt, matExt, nbTiroirs, isTiroirsInterieurs, scaleX_tiroir_face, scaleX_tiroir_fond, scaleY_tiroir_prof, scaleZ_tiroir, deltaX, deltaY, drawerRef);
+	const renderTiroirsFn = () =>
+		renderTiroirs(
+			nodes,
+			matInt,
+			matExt,
+			nbTiroirs,
+			isTiroirsInterieurs,
+			scaleX_tiroir_face,
+			scaleX_tiroir_fond,
+			scaleY_tiroir_prof,
+			scaleZ_tiroir,
+			deltaX,
+			deltaY,
+			drawerRef,
+		);
 
-	const renderPortesFn = (zOffsetPorte, scaleZPorte) => renderPortes(nodes, matExt, largeur, scaleZPorte, EPAISSEUR, scaleX_horizontales, avecPoignees, couleurPoignees, isRightHinge, leftDoorRef, rightDoorRef, zOffsetPorte);
+	// On passe le doorsCount à renderPortes
+	const renderPortesFn = (zOffsetPorte, scaleZPorte) =>
+		renderPortes(
+			nodes,
+			matExt,
+			largeur,
+			scaleZPorte,
+			EPAISSEUR,
+			scaleX_horizontales,
+			avecPoignees,
+			couleurPoignees,
+			isRightHinge,
+			leftDoorRef,
+			rightDoorRef,
+			zOffsetPorte,
+			doorsCount,
+		);
 
-	const { zOffset: zOffsetPorte, scaleZ: scaleZPorte } = getZOffsetAndScale(hasDrawersConfig, isTiroirsInterieurs, scaleZ_fond, scaleZ_demi_porte, HAUTEUR_BLOC_TIROIR);
+	const { zOffset: zOffsetPorte, scaleZ: scaleZPorte } = getZOffsetAndScale(
+		hasDrawersConfig,
+		isTiroirsInterieurs,
+		scaleZ_fond,
+		scaleZ_demi_porte,
+		HAUTEUR_BLOC_TIROIR,
+	);
 
 	return (
 		<group

@@ -56,37 +56,28 @@ export const renderPortes = (
   isRightHinge,
   leftDoorRef,
   rightDoorRef,
-  zOffset
+  zOffset,
+  doorsCount // <--- AJOUT DE L'ARGUMENT
 ) => {
   const HAUTEUR_PORTE_ORIGINE = 812 - EPAISSEUR;
   const doorHeight = HAUTEUR_PORTE_ORIGINE * scaleZ;
 
-  if (largeur >= 700) {
+  // ON UTILISE LA VARIABLE CALCULÉE PAR LE PARENT
+  if (doorsCount === 2) {
     const doorWidth = largeur / 2;
     const scaleXLeft = (25.4 * scaleX_horizontales) / 2;
     const scaleXRight = -((25.4 * scaleX_horizontales) / 2);
 
+    console.log(`🚪 Caisson double | Largeur par porte: ${doorWidth}mm | Caisson complet: ${largeur}mm`);
+
     return (
       <group>
-        <mesh
-          ref={leftDoorRef}
-          geometry={nodes.Geom3D_porte.geometry}
-          material={matExt}
-          position={[0, -18, zOffset]}
-          scale={[scaleXLeft, 25.4, 25.4 * scaleZ]}
-        >
+        <mesh ref={leftDoorRef} geometry={nodes.Geom3D_porte.geometry} material={matExt} position={[0, -18, zOffset]} scale={[scaleXLeft, 25.4, 25.4 * scaleZ]}>
           <group scale={[1 / Math.abs(scaleXLeft), 1 / 25.4, 1 / (25.4 * scaleZ)]}>
             {renderPoignee(avecPoignees, couleurPoignees, doorWidth, doorHeight)}
           </group>
         </mesh>
-
-        <mesh
-          ref={rightDoorRef}
-          geometry={nodes.Geom3D_porte.geometry}
-          material={matExt}
-          position={[largeur, -18, zOffset]}
-          scale={[scaleXRight, 25.4, 25.4 * scaleZ]}
-        >
+        <mesh ref={rightDoorRef} geometry={nodes.Geom3D_porte.geometry} material={matExt} position={[largeur, -18, zOffset]} scale={[scaleXRight, 25.4, 25.4 * scaleZ]}>
           <group scale={[1 / Math.abs(scaleXRight), 1 / 25.4, 1 / (25.4 * scaleZ)]}>
             {renderPoignee(avecPoignees, couleurPoignees, doorWidth, doorHeight)}
           </group>
@@ -95,16 +86,13 @@ export const renderPortes = (
     );
   } else {
     const doorWidth = largeur;
+    
+    console.log(`🚪 Caisson simple | Largeur de la porte: ${doorWidth}mm | Caisson complet: ${largeur}mm`);
+
     if (isRightHinge) {
       const scaleXRight = -(25.4 * scaleX_horizontales);
       return (
-        <mesh
-          ref={rightDoorRef}
-          geometry={nodes.Geom3D_porte.geometry}
-          material={matExt}
-          position={[largeur, -18, zOffset]}
-          scale={[scaleXRight, 25.4, 25.4 * scaleZ]}
-        >
+        <mesh ref={rightDoorRef} geometry={nodes.Geom3D_porte.geometry} material={matExt} position={[largeur, -18, zOffset]} scale={[scaleXRight, 25.4, 25.4 * scaleZ]}>
           <group scale={[1 / Math.abs(scaleXRight), 1 / 25.4, 1 / (25.4 * scaleZ)]}>
             {renderPoignee(avecPoignees, couleurPoignees, doorWidth, doorHeight)}
           </group>
@@ -113,13 +101,7 @@ export const renderPortes = (
     } else {
       const scaleXLeft = 25.4 * scaleX_horizontales;
       return (
-        <mesh
-          ref={leftDoorRef}
-          geometry={nodes.Geom3D_porte.geometry}
-          material={matExt}
-          position={[0, -18, zOffset]}
-          scale={[scaleXLeft, 25.4, 25.4 * scaleZ]}
-        >
+        <mesh ref={leftDoorRef} geometry={nodes.Geom3D_porte.geometry} material={matExt} position={[0, -18, zOffset]} scale={[scaleXLeft, 25.4, 25.4 * scaleZ]}>
           <group scale={[1 / Math.abs(scaleXLeft), 1 / 25.4, 1 / (25.4 * scaleZ)]}>
             {renderPoignee(avecPoignees, couleurPoignees, doorWidth, doorHeight)}
           </group>
