@@ -57,52 +57,65 @@ export const renderPortes = (
   leftDoorRef,
   rightDoorRef,
   zOffset,
-  doorsCount // <--- AJOUT DE L'ARGUMENT
+  doorsCount
 ) => {
+  // --- LOGIQUE DU CUISINISTE : LE JEU DE FONCTIONNEMENT ---
+  const JEU_GLOBAL_MM = 3; // 3mm de jeu total (largeur & hauteur)
+  const JEU_BORD = 1.5;    // 1.5mm de décalage par rapport au bord du caisson
+
+  // 1. Ajustement de la hauteur (On évite que ça frotte en haut et en bas)
   const HAUTEUR_PORTE_ORIGINE = 812 - EPAISSEUR;
-  const doorHeight = HAUTEUR_PORTE_ORIGINE * scaleZ;
+  const doorHeight = (HAUTEUR_PORTE_ORIGINE * scaleZ) - JEU_GLOBAL_MM;
+  const scaleZPorte = doorHeight / HAUTEUR_PORTE_ORIGINE; // Nouveau scaleZ ajusté
 
-  // ON UTILISE LA VARIABLE CALCULÉE PAR LE PARENT
+  // 2. Ajustement de la largeur
   if (doorsCount === 2) {
-    const doorWidth = largeur / 2;
-    const scaleXLeft = (25.4 * scaleX_horizontales) / 2;
-    const scaleXRight = -((25.4 * scaleX_horizontales) / 2);
+    // Caisson Double : 1.5mm à gauche + 3mm au centre + 1.5mm à droite = 6mm de vide total
+    const doorWidth = (largeur - (JEU_GLOBAL_MM * 2)) / 2;
+    
+    // Le scaleX est proportionnel à la nouvelle vraie largeur de la porte
+    const scaleXLeft = 25.4 * scaleX_horizontales * (doorWidth / largeur);
+    const scaleXRight = -scaleXLeft; // On inverse pour la porte droite
 
-    console.log(`🚪 Caisson double | Largeur par porte: ${doorWidth}mm | Caisson complet: ${largeur}mm`);
+    // On décale le point d'ancrage des charnières vers l'intérieur
+    const posLeftX = JEU_BORD;
+    const posRightX = largeur - JEU_BORD;
 
     return (
       <group>
-        <mesh ref={leftDoorRef} geometry={nodes.Geom3D_porte.geometry} material={matExt} position={[0, -18, zOffset]} scale={[scaleXLeft, 25.4, 25.4 * scaleZ]}>
-          <group scale={[1 / Math.abs(scaleXLeft), 1 / 25.4, 1 / (25.4 * scaleZ)]}>
+        <mesh ref={leftDoorRef} geometry={nodes.Geom3D_porte.geometry} material={matExt} position={[posLeftX, -18 + JEU_BORD, zOffset]} scale={[scaleXLeft, 25.4, 25.4 * scaleZPorte]}>
+          <group scale={[1 / Math.abs(scaleXLeft), 1 / 25.4, 1 / (25.4 * scaleZPorte)]}>
             {renderPoignee(avecPoignees, couleurPoignees, doorWidth, doorHeight)}
           </group>
         </mesh>
-        <mesh ref={rightDoorRef} geometry={nodes.Geom3D_porte.geometry} material={matExt} position={[largeur, -18, zOffset]} scale={[scaleXRight, 25.4, 25.4 * scaleZ]}>
-          <group scale={[1 / Math.abs(scaleXRight), 1 / 25.4, 1 / (25.4 * scaleZ)]}>
+        <mesh ref={rightDoorRef} geometry={nodes.Geom3D_porte.geometry} material={matExt} position={[posRightX, -18 + JEU_BORD, zOffset]} scale={[scaleXRight, 25.4, 25.4 * scaleZPorte]}>
+          <group scale={[1 / Math.abs(scaleXRight), 1 / 25.4, 1 / (25.4 * scaleZPorte)]}>
             {renderPoignee(avecPoignees, couleurPoignees, doorWidth, doorHeight)}
           </group>
         </mesh>
       </group>
     );
   } else {
-    const doorWidth = largeur;
+    // Caisson Simple : 1.5mm à gauche + 1.5mm à droite = 3mm de vide total
+    const doorWidth = largeur - JEU_GLOBAL_MM;
+    const scaleX = 25.4 * scaleX_horizontales * (doorWidth / largeur);
     
-    console.log(`🚪 Caisson simple | Largeur de la porte: ${doorWidth}mm | Caisson complet: ${largeur}mm`);
-
     if (isRightHinge) {
-      const scaleXRight = -(25.4 * scaleX_horizontales);
+      const scaleXRight = -scaleX;
+      const posRightX = largeur - JEU_BORD; // La charnière est à droite, on la rentre de 1.5mm
       return (
-        <mesh ref={rightDoorRef} geometry={nodes.Geom3D_porte.geometry} material={matExt} position={[largeur, -18, zOffset]} scale={[scaleXRight, 25.4, 25.4 * scaleZ]}>
-          <group scale={[1 / Math.abs(scaleXRight), 1 / 25.4, 1 / (25.4 * scaleZ)]}>
+        <mesh ref={rightDoorRef} geometry={nodes.Geom3D_porte.geometry} material={matExt} position={[posRightX, -18 + JEU_BORD, zOffset]} scale={[scaleXRight, 25.4, 25.4 * scaleZPorte]}>
+          <group scale={[1 / Math.abs(scaleXRight), 1 / 25.4, 1 / (25.4 * scaleZPorte)]}>
             {renderPoignee(avecPoignees, couleurPoignees, doorWidth, doorHeight)}
           </group>
         </mesh>
       );
     } else {
-      const scaleXLeft = 25.4 * scaleX_horizontales;
+      const scaleXLeft = scaleX;
+      const posLeftX = JEU_BORD; // La charnière est à gauche, on la rentre de 1.5mm
       return (
-        <mesh ref={leftDoorRef} geometry={nodes.Geom3D_porte.geometry} material={matExt} position={[0, -18, zOffset]} scale={[scaleXLeft, 25.4, 25.4 * scaleZ]}>
-          <group scale={[1 / Math.abs(scaleXLeft), 1 / 25.4, 1 / (25.4 * scaleZ)]}>
+        <mesh ref={leftDoorRef} geometry={nodes.Geom3D_porte.geometry} material={matExt} position={[posLeftX, -18 + JEU_BORD, zOffset]} scale={[scaleXLeft, 25.4, 25.4 * scaleZPorte]}>
+          <group scale={[1 / Math.abs(scaleXLeft), 1 / 25.4, 1 / (25.4 * scaleZPorte)]}>
             {renderPoignee(avecPoignees, couleurPoignees, doorWidth, doorHeight)}
           </group>
         </mesh>

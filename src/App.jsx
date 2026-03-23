@@ -1,6 +1,7 @@
-import React, { Suspense, useRef, useEffect } from "react";
+import React, { useRef, useEffect } from "react";
 import { Canvas, useThree, useFrame } from "@react-three/fiber";
-import { OrbitControls, Grid, Center } from "@react-three/drei";
+// NOUVEAU : Ajout de Environment et ContactShadows
+import { OrbitControls, Center, Environment, ContactShadows } from "@react-three/drei";
 import { Routes, Route, Link } from "react-router-dom";
 import * as THREE from "three";
 
@@ -8,114 +9,152 @@ import { Parent } from "./Module-dressing/dressing/Parent";
 import KitchenConfigurator from "./Module-Cuisine/Scene";
 
 const CameraController = ({ items = [], roomDims = null }) => {
-	const { camera, controls } = useThree();
+    const { camera, controls } = useThree();
 
-	const targetPosition = useRef(new THREE.Vector3(0, 1.5, 4));
-	const targetLookAt = useRef(new THREE.Vector3(0, 0, 0));
+    const targetPosition = useRef(new THREE.Vector3(0, 1.5, 4));
+    const targetLookAt = useRef(new THREE.Vector3(0, 0, 0));
 
-	useEffect(() => {
-		if (!items || items.length === 0) {
-			targetPosition.current.set(0, 1.5, 4);
-			targetLookAt.current.set(0, 0, 0);
-			return;
-		}
+    useEffect(() => {
+        if (!items || items.length === 0) {
+            targetPosition.current.set(0, 1.5, 4);
+            targetLookAt.current.set(0, 0, 0);
+            return;
+        }
 
-		const boundingBox = new THREE.Box3();
+        const boundingBox = new THREE.Box3();
 
-		items.forEach((item) => {
-			const w = item.dimensions?.width / 1000 || item.largeur / 1000;
-			const h = item.dimensions?.height / 1000 || item.hauteur / 1000;
-			const d = item.dimensions?.depth / 1000 || item.profondeur / 1000;
+        items.forEach((item) => {
+            const w = item.dimensions?.width / 1000 || item.largeur / 1000;
+            const h = item.dimensions?.height / 1000 || item.hauteur / 1000;
+            const d = item.dimensions?.depth / 1000 || item.profondeur / 1000;
 
-			const x = item.position[0] / 1000;
-			const y = item.position[1] / 1000;
-			const z = item.position[2] / 1000;
+            const x = item.position[0] / 1000;
+            const y = item.position[1] / 1000;
+            const z = item.position[2] / 1000;
 
-			const itemBox = new THREE.Box3();
-			itemBox.min.set(x - w / 2, y, z - d / 2);
-			itemBox.max.set(x + w / 2, y + h, z + d / 2);
+            const itemBox = new THREE.Box3();
+            itemBox.min.set(x - w / 2, y, z - d / 2);
+            itemBox.max.set(x + w / 2, y + h, z + d / 2);
 
-			boundingBox.union(itemBox);
-		});
+            boundingBox.union(itemBox);
+        });
 
-		if (boundingBox.min.equals(boundingBox.max)) {
-			targetPosition.current.set(0, 1.5, 4);
-			targetLookAt.current.set(0, 0, 0);
-			return;
-		}
+        if (boundingBox.min.equals(boundingBox.max)) {
+            targetPosition.current.set(0, 1.5, 4);
+            targetLookAt.current.set(0, 0, 0);
+            return;
+        }
 
-		const size = new THREE.Vector3();
-		boundingBox.getSize(size);
+        const size = new THREE.Vector3();
+        boundingBox.getSize(size);
 
-		const center = new THREE.Vector3();
-		boundingBox.getCenter(center);
+        const center = new THREE.Vector3();
+        boundingBox.getCenter(center);
 
-		const maxDim = Math.max(size.x, size.z);
-		const fov = camera.fov * (Math.PI / 180);
-		const cameraDistance = maxDim / (2 * Math.tan(fov / 2));
-		const padding = 2;
-		const finalDistance = cameraDistance * padding + maxDim * 0.3;
+        const maxDim = Math.max(size.x, size.z);
+        const fov = camera.fov * (Math.PI / 180);
+        const cameraDistance = maxDim / (2 * Math.tan(fov / 2));
+        const padding = 2;
+        const finalDistance = cameraDistance * padding + maxDim * 0.3;
 
-		targetPosition.current.set(0, Math.max(size.y * 0.5, 1), finalDistance);
-		targetLookAt.current.set(center.x, size.y * 0.3, center.z);
-	}, [items, roomDims]); // eslint-disable-line react-hooks/exhaustive-deps
+        targetPosition.current.set(0, Math.max(size.y * 0.5, 1), finalDistance);
+        targetLookAt.current.set(center.x, size.y * 0.3, center.z);
+    }, [items, roomDims]); // eslint-disable-line react-hooks/exhaustive-deps
 
-	useFrame(() => {
-		const lerpFactor = 0.03;
-		camera.position.lerp(targetPosition.current, lerpFactor);
+    useFrame(() => {
+        const lerpFactor = 0.03;
+        camera.position.lerp(targetPosition.current, lerpFactor);
 
-		if (controls) {
-			const currentTarget = controls.target || new THREE.Vector3(0, 0, 0);
-			currentTarget.lerp(targetLookAt.current, lerpFactor);
-			controls.target.copy(currentTarget);
-			controls.update();
-		}
-	});
+        if (controls) {
+            const currentTarget = controls.target || new THREE.Vector3(0, 0, 0);
+            currentTarget.lerp(targetLookAt.current, lerpFactor);
+            controls.target.copy(currentTarget);
+            controls.update();
+        }
+    });
 
-	return null;
+    return null;
 };
 
+// --- NOUVELLE SCÈNE DRESSING PHOTORÉALISTE ---
 const DressingScene = () => {
-	return (
-		<>
-			<ambientLight intensity={0.6} />
-			<directionalLight position={[5, 5, 5]} intensity={0.8} />
-			<Center>
-				<Parent />
-			</Center>
+    return (
+        <>
+            {/* 1. Éclairage doux (teinte légèrement chaude) */}
+            <ambientLight intensity={0.4} />
+            <directionalLight position={[5, 10, 5]} intensity={0.8} color="#fffbeb" />
 
-			<OrbitControls
-				makeDefault
-				enableZoom={false}
-				minPolarAngle={Math.PI * 0.1}
-				maxPolarAngle={Math.PI / 2 - 0.1}
-				minAzimuthAngle={-Math.PI / 4}
-				maxAzimuthAngle={Math.PI / 4}
-				enablePan={false}
-			/>
-		</>
-	);
+            {/* 2. Réflexions HDRI pour faire briller le bois et le métal */}
+            <Environment preset="apartment" blur={0.5} />
+
+            {/* 3. Ombres de contact pour ancrer le dressing au sol */}
+            <ContactShadows 
+                position={[0, 0, 0]} // Posé au niveau 0
+                opacity={0.65}
+                scale={20}
+                blur={2.5}
+                far={2}
+                resolution={1024}
+                color="#1e293b"
+            />
+
+            {/* 4. Le Dressing */}
+            {/* "bottom" aligne la base du meuble sur Y=0 pour coller à l'ombre */}
+            <Center bottom>
+                <Parent />
+            </Center>
+
+            {/* 5. Contrôles fluides */}
+            <OrbitControls
+                makeDefault
+                enableZoom={true} // Permet au client de s'approcher des détails
+                minPolarAngle={0}
+                maxPolarAngle={Math.PI / 2} // Empêche de passer sous le sol
+                enableDamping
+                dampingFactor={0.05} // Effet de glissement "luxe"
+            />
+        </>
+    );
 };
 
 export default function App() {
-	return (
-		<div style={{ width: "100vw", height: "100vh", background: "#e5e7eb" }}>
-			<Routes>
-				<Route
-					path="/"
-					element={
-						<>
-							<Link to="/cuisine" style={{ position: "absolute", zIndex: 10, padding: "10px", background: "white" }}>
-								Go to Kitchen Configurator
-							</Link>
-							<Canvas camera={{ position: [0, 1.5, 4], fov: 45 }}>
-								<DressingScene />
-							</Canvas>
-						</>
-					}
-				/>
-				<Route path="/cuisine" element={<KitchenConfigurator />} />
-			</Routes>
-		</div>
-	);
+    return (
+        // J'ai mis un gris très clair en fond pour bien faire ressortir les ombres
+        <div style={{ width: "100vw", height: "100vh", background: "#f8fafc" }}>
+            <Routes>
+                <Route
+                    path="/"
+                    element={
+                        <>
+                            {/* Un bouton de navigation plus propre */}
+                            <Link 
+                                to="/cuisine" 
+                                style={{ 
+                                    position: "absolute", 
+                                    zIndex: 10, 
+                                    padding: "10px 20px", 
+                                    background: "#111827", 
+                                    color: "white", 
+                                    textDecoration: "none", 
+                                    borderRadius: "8px", 
+                                    top: "20px", 
+                                    left: "20px", 
+                                    fontWeight: "bold", 
+                                    fontFamily: "'Inter', sans-serif",
+                                    boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)"
+                                }}
+                            >
+                                ➔ Passer à la Cuisine
+                            </Link>
+                            
+                            <Canvas shadows camera={{ position: [0, 1.5, 4], fov: 45 }}>
+                                <DressingScene />
+                            </Canvas>
+                        </>
+                    }
+                />
+                <Route path="/cuisine" element={<KitchenConfigurator />} />
+            </Routes>
+        </div>
+    );
 }
