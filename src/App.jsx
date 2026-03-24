@@ -125,28 +125,6 @@ export default function App() {
 					path="/"
 					element={
 						<>
-							{/* Le bouton pour naviguer vers la cuisine */}
-							{/* Je l'ai mis en haut à DROITE (right: 20px) pour qu'il ne se superpose pas avec la Sidebar */}
-							<Link
-								to="/cuisine"
-								style={{
-									position: "absolute",
-									zIndex: 20,
-									padding: "10px 20px",
-									background: "#111827",
-									color: "white",
-									textDecoration: "none",
-									borderRadius: "8px",
-									top: "20px",
-									right: "20px",
-									fontWeight: "bold",
-									fontFamily: "'Inter', sans-serif",
-									boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
-								}}
-							>
-								➔ Passer à la Cuisine
-							</Link>
-
 							{/* On appelle juste le composant, il s'occupe du reste (UI + Canvas) ! */}
 							<DressingConfigurator />
 						</>

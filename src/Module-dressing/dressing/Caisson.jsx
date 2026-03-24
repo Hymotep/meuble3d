@@ -1,5 +1,6 @@
 import React, { useState, useRef, useMemo } from "react";
-import { useGLTF, useTexture } from "@react-three/drei";
+// NOUVEAU : On importe `Html` pour afficher le texte des mesures
+import { useGLTF, useTexture, Html } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import {
@@ -15,6 +16,53 @@ import {
 import { renderPortes, doorAnimation } from "../utils/porteUtils.jsx";
 import { renderEtagere, renderPenderie, renderTiroirs, drawerAnimation } from "../utils/tiroirsUtils.jsx";
 
+// ============================================================================
+// --- NOUVEAU COMPOSANT : LES COTES 3D (MESURES) ---
+// ============================================================================
+const DimensionLine = ({ length, position, rotation, label }) => {
+    const color = "#001d32"; // Orange "Plan d'architecte"
+    
+    return (
+        <group position={position} rotation={rotation}>
+            {/* Ligne principale (au centre) */}
+            <mesh renderOrder={999}>
+                <cylinderGeometry args={[4, 4, length, 8]} />
+                {/* depthTest={false} permet à la ligne de s'afficher PAR-DESSUS le meuble, sans être cachée */}
+                <meshBasicMaterial color={color} depthTest={false} transparent opacity={0.8} />
+            </mesh>
+            
+            {/* Taquet (limite) gauche/haut */}
+            <mesh position={[0, length / 2, 0]} rotation={[0, 0, Math.PI / 2]} renderOrder={999}>
+                <cylinderGeometry args={[6, 6, 60, 8]} />
+                <meshBasicMaterial color={color} depthTest={false} />
+            </mesh>
+            
+            {/* Taquet (limite) droite/bas */}
+            <mesh position={[0, -length / 2, 0]} rotation={[0, 0, Math.PI / 2]} renderOrder={999}>
+                <cylinderGeometry args={[6, 6, 60, 8]} />
+                <meshBasicMaterial color={color} depthTest={false} />
+            </mesh>
+            
+            {/* Étiquette de texte (HTML pur superposé à la 3D) */}
+            <Html center style={{ pointerEvents: "none", zIndex: 1000 }}>
+                <div style={{
+                    background: color,
+                    color: 'white',
+                    padding: '4px 8px',
+                    borderRadius: '6px',
+                    fontSize: '13px',
+                    fontWeight: 'bold',
+                    fontFamily: "'Inter', sans-serif",
+                    whiteSpace: 'nowrap',
+                    boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+                }}>
+                    {label} cm
+                </div>
+            </Html>
+        </group>
+    );
+};
+
 export function Caisson({
     largeur,
     hauteur,
@@ -29,7 +77,7 @@ export function Caisson({
     couleurInt,
     avecPoignees,
     couleurPoignees,
-    avecLED, // <--- NOUVEAU
+    avecLED, 
     isTiroirsInterieurs,
     isRightHinge,
     ...props
@@ -82,7 +130,6 @@ export function Caisson({
         drawerAnimation(drawerRef, isHovered, isTiroirsInterieurs, hasDrawersConfig);
     });
 
-    // ON TRANSMET `avecLED`, `largeur` ET `profondeur` POUR DESSINER LA LUMIÈRE
     const renderEtagereFn = (hauteurZ, key) => renderEtagere(nodes, matInt, EPAISSEUR, scaleX_etagere, scaleY_profondeur, hauteurZ, key, avecLED, largeur, profondeur);
     const renderPenderieFn = (hauteurEtagere, key) => renderPenderie(largeur, EPAISSEUR, profondeur, hauteurEtagere, key);
     const renderTiroirsFn = () =>
@@ -119,7 +166,6 @@ export function Caisson({
                     <mesh geometry={nodes.Geom3D_traverse_haut.geometry} material={matExt} position={[0, 0, hauteur - EPAISSEUR]} scale={[25.4 * scaleX_horizontales, 25.4 * scaleY_profondeur, 25.4]} />
                     <mesh geometry={nodes.Geom3D_fond_arrière.geometry} material={matInt} position={[0, profondeur, 0]} scale={[25.4 * scaleX_horizontales, 25.4, 25.4 * scaleZ_fond]} />
 
-                    {/* NOUVEAU : RUBAN LED GLOBAL AU PLAFOND DU CAISSON */}
                     {avecLED && (
                         <group position={[largeur / 2, profondeur - 50, hauteur - EPAISSEUR - 10]}>
                             <mesh>
@@ -160,11 +206,41 @@ export function Caisson({
 
                     {renderPortesFn(zOffsetPorte, scaleZPorte)}
 
+                    {/* === SÉLECTION & MESURES DU CAISSON === */}
                     {isSelected && (
-                        <mesh position={[largeur / 2, profondeur / 2, hauteur / 2]}>
-                            <boxGeometry args={[largeur + 4, profondeur + 4, hauteur + 4]} />
-                            <meshBasicMaterial color="#ff4a36" transparent opacity={0.3} depthWrite={false} />
-                        </mesh>
+                        <>
+                            {/* Le contour de sélection léger (passé en orange) */}
+                            <mesh position={[largeur / 2, profondeur / 2, hauteur / 2]}>
+                                <boxGeometry args={[largeur + 4, profondeur + 4, hauteur + 4]} />
+                                <meshBasicMaterial color="#f97316" transparent opacity={0.15} depthWrite={false} />
+                            </mesh>
+
+                            {/* LES MESURES (Largeur, Hauteur, Profondeur) */}
+                            
+                            {/* 1. Largeur (X) - Devant, en bas */}
+                            <DimensionLine 
+                                length={largeur} 
+                                position={[largeur / 2, -150, 50]} 
+                                rotation={[0, 0, Math.PI / 2]} 
+                                label={(largeur / 10).toFixed(0)} 
+                            />
+                            
+                            {/* 2. Hauteur (Z) - À droite, en bas */}
+                            <DimensionLine 
+                                length={hauteur} 
+                                position={[largeur + 150, -50, hauteur / 2]} 
+                                rotation={[Math.PI / 2, 0, 0]} 
+                                label={(hauteur / 10).toFixed(0)} 
+                            />
+                            
+                            {/* 3. Profondeur (Y) - À gauche, au sol */}
+                            <DimensionLine 
+                                length={profondeur} 
+                                position={[-150, profondeur / 2, 50]} 
+                                rotation={[0, 0, 0]} 
+                                label={(profondeur / 10).toFixed(0)} 
+                            />
+                        </>
                     )}
                 </group>
             </group>
