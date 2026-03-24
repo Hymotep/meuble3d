@@ -11,7 +11,7 @@
  */
 
 import * as THREE from "three";
-import { PERP_GAP, MIN_CABINET_GAP } from "../../config/constants.js";
+import { PERP_GAP, MIN_CABINET_GAP } from "./constants.js";
 
 /**
  * Calculates the axis-aligned bounding box (AABB) for a cabinet.

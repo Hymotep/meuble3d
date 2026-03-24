@@ -13,9 +13,9 @@
 
 import React, { useRef } from "react";
 import { useStore } from "../store/store";
-import { DEFAULT_CABINET_CONFIG } from "../../config/pricing";
-import { STANDARD_DIMENSIONS } from "../../config/constants";
-import { theme } from "../../config/theme";
+import { DEFAULT_CABINET_CONFIG } from "../utils/pricing";
+import { STANDARD_DIMENSIONS } from "../utils/constants";
+import { theme } from "../utils/theme";
 import { Icons } from "./Icons";
 
 const PRESETS = {

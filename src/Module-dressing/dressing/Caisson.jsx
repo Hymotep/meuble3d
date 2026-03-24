@@ -1,5 +1,4 @@
 import React, { useState, useRef, useMemo } from "react";
-// NOUVEAU : On importe `Html` pour afficher le texte des mesures
 import { useGLTF, useTexture, Html } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
@@ -16,34 +15,34 @@ import {
 import { renderPortes, doorAnimation } from "../utils/porteUtils.jsx";
 import { renderEtagere, renderPenderie, renderTiroirs, drawerAnimation } from "../utils/tiroirsUtils.jsx";
 
-// ============================================================================
-// --- NOUVEAU COMPOSANT : LES COTES 3D (MESURES) ---
-// ============================================================================
+/**
+ * ============================================================================
+ * DIMENSION LINE - Affichage des mesures 3D
+ * ============================================================================
+ * Composant qui affiche une ligne de cote avec label sur le caisson.
+ * Utilisé pour montrer les dimensions (largeur, hauteur, profondeur).
+ */
+
 const DimensionLine = ({ length, position, rotation, label }) => {
-    const color = "#001d32"; // Orange "Plan d'architecte"
+    const color = "#001d32";
     
     return (
         <group position={position} rotation={rotation}>
-            {/* Ligne principale (au centre) */}
             <mesh renderOrder={999}>
                 <cylinderGeometry args={[4, 4, length, 8]} />
-                {/* depthTest={false} permet à la ligne de s'afficher PAR-DESSUS le meuble, sans être cachée */}
                 <meshBasicMaterial color={color} depthTest={false} transparent opacity={0.8} />
             </mesh>
             
-            {/* Taquet (limite) gauche/haut */}
             <mesh position={[0, length / 2, 0]} rotation={[0, 0, Math.PI / 2]} renderOrder={999}>
                 <cylinderGeometry args={[6, 6, 60, 8]} />
                 <meshBasicMaterial color={color} depthTest={false} />
             </mesh>
             
-            {/* Taquet (limite) droite/bas */}
             <mesh position={[0, -length / 2, 0]} rotation={[0, 0, Math.PI / 2]} renderOrder={999}>
                 <cylinderGeometry args={[6, 6, 60, 8]} />
                 <meshBasicMaterial color={color} depthTest={false} />
             </mesh>
             
-            {/* Étiquette de texte (HTML pur superposé à la 3D) */}
             <Html center style={{ pointerEvents: "none", zIndex: 1000 }}>
                 <div style={{
                     background: color,
@@ -62,6 +61,19 @@ const DimensionLine = ({ length, position, rotation, label }) => {
         </group>
     );
 };
+
+/**
+ * ============================================================================
+ * CAISSON - Composant principal de rendu d'un caisson 3D
+ * ============================================================================
+ * Ce composant génère le rendu 3D d'un caisson de dressing avec :
+ * - Structure (parois, fond, traverses)
+ * - Porte(s) (avec ou sans poignées)
+ * - Aménagement intérieur (tiroirs, étagères, penderie)
+ * - Éclairage LED (optionnel)
+ * - Animation au survol
+ * - Mesures (quand sélectionné)
+ */
 
 export function Caisson({
     largeur,
@@ -206,18 +218,13 @@ export function Caisson({
 
                     {renderPortesFn(zOffsetPorte, scaleZPorte)}
 
-                    {/* === SÉLECTION & MESURES DU CAISSON === */}
                     {isSelected && (
                         <>
-                            {/* Le contour de sélection léger (passé en orange) */}
                             <mesh position={[largeur / 2, profondeur / 2, hauteur / 2]}>
                                 <boxGeometry args={[largeur + 4, profondeur + 4, hauteur + 4]} />
                                 <meshBasicMaterial color="#f97316" transparent opacity={0.15} depthWrite={false} />
                             </mesh>
 
-                            {/* LES MESURES (Largeur, Hauteur, Profondeur) */}
-                            
-                            {/* 1. Largeur (X) - Devant, en bas */}
                             <DimensionLine 
                                 length={largeur} 
                                 position={[largeur / 2, -150, 50]} 
@@ -225,7 +232,6 @@ export function Caisson({
                                 label={(largeur / 10).toFixed(0)} 
                             />
                             
-                            {/* 2. Hauteur (Z) - À droite, en bas */}
                             <DimensionLine 
                                 length={hauteur} 
                                 position={[largeur + 150, -50, hauteur / 2]} 
@@ -233,7 +239,6 @@ export function Caisson({
                                 label={(hauteur / 10).toFixed(0)} 
                             />
                             
-                            {/* 3. Profondeur (Y) - À gauche, au sol */}
                             <DimensionLine 
                                 length={profondeur} 
                                 position={[-150, profondeur / 2, 50]} 

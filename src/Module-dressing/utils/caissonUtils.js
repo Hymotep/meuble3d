@@ -75,7 +75,7 @@ export const calculateDoorScale = (hauteur) => {
 };
 
 export const createMaterial = (finition, couleur, colorMap, normalMap, roughnessMap) => {
-  const isOak = finition === "Chêne";
+  const isOak = finition === "Ch\u00eane";
   return new THREE.MeshStandardMaterial({
     color: isOak ? "#ffffff" : couleur,
     map: isOak ? colorMap : null,

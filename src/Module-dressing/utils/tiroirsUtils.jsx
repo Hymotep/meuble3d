@@ -1,7 +1,6 @@
 import * as THREE from "three";
 import React from "react";
 
-// MODIFICATION : Ajout de avecLED, largeur et profondeur
 export const renderEtagere = (
     nodes,
     matInt,
@@ -18,7 +17,6 @@ export const renderEtagere = (
 
     return (
         <group key={key}>
-            {/* 1. L'Étagère physique */}
             <mesh 
                 geometry={nodes.Geom3D_étagère_1.geometry} 
                 material={matInt} 
@@ -26,22 +24,18 @@ export const renderEtagere = (
                 scale={[25.4 * scaleX_etagere, 25.4 * scaleY_profondeur, 25.4]} 
             />
 
-            {/* 2. Le Système LED (S'active uniquement si l'option est cochée) */}
             {avecLED && (
                 <group position={[largeur / 2, profondeur - 50, hauteurZ - 10]}>
-                    {/* Le ruban physique (Petit tube blanc brillant) */}
                     <mesh>
                         <boxGeometry args={[innerWidth - 40, 8, 4]} />
                         <meshBasicMaterial color="#fffbeb" />
                     </mesh>
-
-                    {/* La lumière projetée (Halo chaud vers le bas) */}
                     <pointLight
-                        distance={800} // Jusqu'où la lumière éclaire
-                        intensity={0.4} // Puissance douce
-                        color="#fffbeb" // Blanc chaud typique des LED (3000K)
+                        distance={800}
+                        intensity={0.4}
+                        color="#fffbeb"
                         position={[0, -20, 0]}
-                        decay={2} // Atténuation réaliste
+                        decay={2}
                     />
                 </group>
             )}

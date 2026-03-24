@@ -16,7 +16,7 @@ import * as THREE from "three";
 import { Caisson2 } from "./Caisson2";
 import ArchitectureVisual from "./ArchitectureVisual";
 import { getBBox, getClearanceBBox, doIntersect } from "../utils/collision";
-import { SNAP_DISTANCE } from "../../config/constants";
+import { SNAP_DISTANCE } from "../utils/constants";
 
 const DraggableCaisson = ({ id, position, dimensions, type, config, isSelected, isClearanceViolated }) => {
 	const meshRef = useRef();

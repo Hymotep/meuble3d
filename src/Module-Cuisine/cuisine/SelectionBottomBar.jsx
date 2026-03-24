@@ -9,9 +9,9 @@
 
 import React from "react";
 import { useStore } from "../store/store";
-import { theme } from "../../config/theme";
+import { theme } from "../utils/theme";
 import { Icons } from "./Icons";
-import { CABINET_WIDTH_OPTIONS } from "../../config/constants";
+import { CABINET_WIDTH_OPTIONS } from "../utils/constants";
 
 const SelectionBottomBar = () => {
 	const items = useStore((state) => state.items);
