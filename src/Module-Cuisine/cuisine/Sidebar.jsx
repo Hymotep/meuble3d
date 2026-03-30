@@ -4,32 +4,30 @@ import { DEFAULT_CABINET_CONFIG } from "../utils/pricing";
 import { CABINET_WIDTH_OPTIONS } from "../utils/constants";
 import { theme } from "../utils/theme";
 import { Icons } from "./Icons";
+import { Link } from "react-router-dom";
 
+// --- COMPOSANT BOUTON FORME PIÈCE ---
 const RoomShapeBtn = ({ active, onClick, label, children }) => (
-	<div
+	<button
 		onClick={onClick}
 		style={{
+			...theme.btnSecondary,
 			flex: 1,
-			display: "flex",
+			height: "70px",
 			flexDirection: "column",
-			alignItems: "center",
-			justifyContent: "center",
-			padding: "16px 4px",
-			background: active ? "#eff6ff" : "#f9fafb",
-			border: `1.5px solid ${active ? "#3b82f6" : "#e5e7eb"}`,
-			borderRadius: "8px",
-			cursor: "pointer",
-			transition: "all 0.2s",
+			gap: "8px",
+			background: active ? "#111827" : "#ffffff",
+			color: active ? "#ffffff" : "#111827",
+			borderColor: active ? "#111827" : "#d1d5db",
+			padding: "10px 4px",
 		}}
 	>
 		{children}
-		<span style={{ fontSize: "11px", fontWeight: "600", color: active ? "#1d4ed8" : "#6b7280", marginTop: "12px", textAlign: "center" }}>
-			{label}
-		</span>
-	</div>
+		<span style={{ fontSize: "11px", fontWeight: "600" }}>{label}</span>
+	</button>
 );
 
-// --- RESTAURATION DE TOUS LES PRESETS ---
+// --- PRESETS ---
 const PRESETS = {
 	lineaire: {
 		items: (defaultConfig) => [
@@ -404,7 +402,6 @@ const Sidebar = () => {
 
 	const fileInputRef = useRef(null);
 
-	// --- RESTAURATION DE LA LOGIQUE DES PRESETS ET SAUVEGARDE ---
 	const loadPreset = (presetName) => {
 		const preset = PRESETS[presetName];
 		if (!preset) return;
@@ -460,6 +457,19 @@ const Sidebar = () => {
 		const isArchitecture = item.type === "window";
 		const getWidthOptions = () =>
 			isArchitecture ? CABINET_WIDTH_OPTIONS.window : item.type === "island" ? CABINET_WIDTH_OPTIONS.island : CABINET_WIDTH_OPTIONS.standard;
+
+		// Fonction pour gérer l'équipement (avec ajustement automatique de la largeur)
+		const handleEquipmentChange = (e) => {
+			const val = e.target.value;
+			updateItemConfig(selectedId, { equipement: val });
+
+			// Si c'est un lave-vaisselle, on ajuste la largeur automatiquement !
+			if (val === "dishwasher_45") {
+				updateItemDimensions(selectedId, { width: 450 });
+			} else if (val === "dishwasher_60") {
+				updateItemDimensions(selectedId, { width: 600 });
+			}
+		};
 
 		return (
 			<div style={theme.panel}>
@@ -536,13 +546,10 @@ const Sidebar = () => {
 								</div>
 							</div>
 
+							{/* --- AJOUT DES OPTIONS LAVE-VAISSELLE --- */}
 							<div style={theme.section}>
 								<label style={theme.label}>Équipement</label>
-								<select
-									value={item.config.equipement || "none"}
-									onChange={(e) => updateItemConfig(selectedId, { equipement: e.target.value })}
-									style={theme.select}
-								>
+								<select value={item.config.equipement || "none"} onChange={handleEquipmentChange} style={theme.select}>
 									{item.type === "tall_cabinet" ? (
 										<>
 											<option value="none">Aucun</option>
@@ -553,6 +560,8 @@ const Sidebar = () => {
 											<option value="none">Libre</option>
 											<option value="sink">Évier</option>
 											<option value="cooktop">Plaque de cuisson</option>
+											<option value="dishwasher_45">Lave-vaisselle (45 cm)</option>
+											<option value="dishwasher_60">Lave-vaisselle (60 cm)</option>
 										</>
 									)}
 								</select>
@@ -609,6 +618,30 @@ const Sidebar = () => {
 
 	return (
 		<div style={theme.panel}>
+			{/* Header + Nav vers Dressing */}
+			<div style={{ ...theme.header, paddingBottom: "12px", borderBottom: "none" }}>
+				<Link
+					to="/dressing"
+					style={{
+						display: "inline-flex",
+						alignItems: "center",
+						gap: "4px",
+						color: "#6b7280",
+						fontSize: "12px",
+						textDecoration: "none",
+						fontWeight: "500",
+						marginBottom: "16px",
+						transition: "color 0.2s",
+					}}
+					onMouseEnter={(e) => (e.currentTarget.style.color = "#111827")}
+					onMouseLeave={(e) => (e.currentTarget.style.color = "#6b7280")}
+				>
+					<Icons.ChevronLeft /> Retour au dressing
+				</Link>
+				<h1 style={{ ...theme.titleH1, fontSize: "18px", marginBottom: "2px" }}>Studio Design 3D</h1>
+				<p style={{ ...theme.subtitle, fontSize: "11px", margin: 0, marginBottom: "16px" }}>Configurez votre cuisine sur mesure</p>
+			</div>
+
 			<div style={{ display: "flex", borderBottom: "1px solid #e5e7eb", background: "#fff" }}>
 				<div onClick={() => setActiveTab("room")} style={tabStyle(activeTab === "room")}>
 					Pièce
@@ -622,17 +655,6 @@ const Sidebar = () => {
 			</div>
 
 			<div style={theme.scrollArea}>
-				{/* --- Boutons globaux Save/Load --- */}
-				<div style={theme.buttonRow}>
-					<button onClick={handleExport} style={theme.btnOutline}>
-						<Icons.Save /> Exporter
-					</button>
-					<button onClick={() => fileInputRef.current?.click()} style={theme.btnOutline}>
-						<Icons.Folder /> Importer
-					</button>
-					<input type="file" accept=".json" ref={fileInputRef} style={{ display: "none" }} onChange={handleImport} />
-				</div>
-
 				{/* --- ONGLET PIÈCE --- */}
 				{activeTab === "room" && (
 					<div style={theme.section}>
@@ -784,6 +806,17 @@ const Sidebar = () => {
 						</div>
 					</div>
 				)}
+			</div>
+
+			{/* Boutons de sauvegarde en bas (Optionnel, mais très pratique pour l'UX) */}
+			<div style={{ padding: "16px", borderTop: "1px solid #e5e7eb", background: "#fff", display: "flex", gap: "8px" }}>
+				<button onClick={handleExport} style={theme.btnOutline}>
+					<Icons.Save /> Sauvegarder
+				</button>
+				<button onClick={() => fileInputRef.current?.click()} style={theme.btnOutline}>
+					<Icons.Folder /> Charger
+				</button>
+				<input type="file" accept=".json" ref={fileInputRef} style={{ display: "none" }} onChange={handleImport} />
 			</div>
 		</div>
 	);
