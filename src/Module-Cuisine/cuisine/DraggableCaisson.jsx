@@ -2,12 +2,10 @@
  * ============================================================================
  * DRAGGABLE CAISSON COMPONENT
  * ============================================================================
- *
  * Wrapper component that makes a cabinet draggable in the 3D scene.
- * Handles drag gestures, collision detection, and position updates.
  */
 
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { useThree } from "@react-three/fiber";
 import { useStore } from "../store/store";
 import { useDrag } from "@use-gesture/react";
@@ -31,6 +29,14 @@ const DraggableCaisson = ({ id, position, dimensions, type, config, isSelected, 
 	const [isColliding, setIsColliding] = useState(false);
 	const [localClearanceViolated, setLocalClearanceViolated] = useState(false);
 	const lastValidPos = useRef({ x: position[0] / 1000, z: position[2] / 1000 });
+
+	// CRUCIAL : Met à jour la position interne si store.js a forcé le déplacement (via AutoFitWall)
+	useEffect(() => {
+		lastValidPos.current = { x: position[0] / 1000, z: position[2] / 1000 };
+		if (meshRef.current) {
+			meshRef.current.position.set(position[0] / 1000, position[1] / 1000, position[2] / 1000);
+		}
+	}, [position[0], position[1], position[2]]);
 
 	const currentItem = items.find((i) => i.id === id);
 	const rotationDeg = currentItem?.rotation || 0;
@@ -60,10 +66,7 @@ const DraggableCaisson = ({ id, position, dimensions, type, config, isSelected, 
 			event.stopPropagation();
 			setSelectedId(id);
 			setDraggedId(id);
-			if (controls) {
-				controls.enabled = false;
-			}
-			lastValidPos.current = { x: meshRef.current.position.x, z: meshRef.current.position.z };
+			if (controls) controls.enabled = false;
 			return { offsetX: intersectPoint.x - meshRef.current.position.x, offsetZ: intersectPoint.z - meshRef.current.position.z };
 		}
 
@@ -178,9 +181,7 @@ const DraggableCaisson = ({ id, position, dimensions, type, config, isSelected, 
 		if (last) {
 			setDraggedId(null);
 			setLocalClearanceViolated(false);
-			if (controls) {
-				controls.enabled = true;
-			}
+			if (controls) controls.enabled = true;
 			updateItemPosition(id, [meshRef.current.position.x * 1000, baseY * 1000, meshRef.current.position.z * 1000]);
 			setIsColliding(false);
 		}
