@@ -7,11 +7,10 @@
  */
 
 import React, { useMemo } from "react";
-import { useStore } from "../store/store";
-import { calculateItemPrice } from "../utils/Sidebar/pricing";
-import { theme } from "../utils/Sidebar/theme";
-import { Icons } from "./Icons";
-
+import { useStore } from "../../store/store";
+import { calculateItemPrice } from "../../utils/Sidebar/pricing";
+import { theme } from "../../utils/Sidebar/theme";
+import { Icons } from "../ui/Icons";
 const DevisPanel = () => {
 	const items = useStore((state) => state.items);
 

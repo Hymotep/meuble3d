@@ -7,11 +7,11 @@
  */
 
 import React, { useRef, useEffect } from "react";
-import { useStore } from "../store/store";
+import { useStore } from "../../store/store";
 
-import { Caisson2 } from "./CaissonCuisine";
-import ArchitectureVisual from "./ArchitectureVisual";
-import { useCabinetDrag } from "./hooks/DraggableCaisson/useCabinetDrag";
+import { Caisson2 } from "../cabinet/CaissonCuisine";
+import ArchitectureVisual from "../scene/ArchitectureVisual";
+import { useCabinetDrag } from "../hooks/DraggableCaisson/useCabinetDrag";
 
 const DraggableCaisson = ({ id, position, dimensions, type, config, isSelected, isClearanceViolated }) => {
 	const meshRef = useRef();

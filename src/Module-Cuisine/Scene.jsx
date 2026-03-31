@@ -1,11 +1,11 @@
 import React from "react";
 import { Canvas } from "@react-three/fiber";
 
-import Sidebar from "./cuisine/Sidebar";
-import KitchenScene from "./cuisine/KitchenScene";
-import DevisPanel from "./cuisine/DevisPanel";
-import FloatingActionMenu from "./cuisine/FloatingActionMenu"; // Remplaçant de SelectionBottomBar
-import RightToolbar from "./cuisine/RightToolBar"; // NOUVEAU
+import Sidebar from "./cuisine/bar/Sidebar";
+import KitchenScene from "./cuisine/scene/KitchenScene";
+import DevisPanel from "./cuisine/ui/DevisPanel";
+import FloatingActionMenu from "./cuisine/bar/FloatingActionMenu"; // Remplaçant de SelectionBottomBar
+import RightToolbar from "./cuisine/bar/RightToolBar"; // NOUVEAU
 
 const Scene = () => {
     return (

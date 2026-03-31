@@ -1,7 +1,6 @@
 import React from "react";
-import { useStore } from "../store/store";
-import { Icons } from "./Icons";
-
+import { useStore } from "../../store/store";
+import { Icons } from "../ui/Icons";
 const RightToolbar = () => {
     const viewMode = useStore(s => s.viewMode);
     const setViewMode = useStore(s => s.setViewMode);

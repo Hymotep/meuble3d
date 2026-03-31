@@ -5,12 +5,12 @@
  */
 
 import React, { useMemo, useEffect } from "react";
-import { useThree } from "@react-three/fiber"; // <-- L'IMPORT MANQUANT ÉTAIT LÀ !
+import { useThree } from "@react-three/fiber"; 
 import { OrbitControls, Grid, PerspectiveCamera, OrthographicCamera, Environment, ContactShadows } from "@react-three/drei";
-import { useStore } from "../store/store";
-import { getClearanceBBox, doIntersect, getBBox } from "../utils/KitchenScene/collision";
-import RoomBuilder from "./RoomBuilder";
-import DraggableCaisson from "./DraggableCaisson";
+import { useStore } from "../../store/store";
+import { getClearanceBBox, doIntersect, getBBox } from "../../utils/KitchenScene/collision";
+import RoomBuilder from "../scene/RoomBuilder";
+import DraggableCaisson from "../cabinet/DraggableCaisson";
 
 // --- GESTIONNAIRE DE CAMÉRA (Zoom, Dézoom, Centrage depuis l'interface) ---
 const CameraHandler = () => {

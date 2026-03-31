@@ -10,7 +10,7 @@
 
 import React, { useMemo } from "react";
 import * as THREE from "three";
-import { useStore } from "../store/store";
+import { useStore } from "../../store/store";
 
 const RoomBuilder = () => {
 	const room = useStore((state) => state.room);

@@ -1,6 +1,6 @@
 import React from "react";
-import { useStore } from "../store/store";
-import { Icons } from "./Icons";
+import { useStore } from "../../store/store";
+import { Icons } from "../ui/Icons";
 
 const FloatingActionMenu = () => {
 	const selectedId = useStore((s) => s.selectedId);

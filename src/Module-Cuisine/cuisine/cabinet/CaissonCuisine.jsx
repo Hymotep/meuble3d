@@ -8,9 +8,9 @@
 
 import React from "react";
 import { Edges } from "@react-three/drei";
-import { Dishwasher } from "./Dishwasher";
-import { useCabinetMaterials } from "./hooks/CaissonCuisine/useCabinetMaterials";
-import { getCabinetLayout } from "../utils/CaissonCuisine/cabinetLayout";
+import { Dishwasher } from "../appliance/Dishwasher";
+import { useCabinetMaterials } from "../hooks/CaissonCuisine/useCabinetMaterials";
+import { getCabinetLayout } from "../../utils/CaissonCuisine/cabinetLayout";
 
 export const Caisson2 = ({
     largeur = 600,

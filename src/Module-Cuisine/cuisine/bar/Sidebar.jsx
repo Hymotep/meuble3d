@@ -8,12 +8,13 @@
 
 import React, { useRef } from "react";
 import { Link } from "react-router-dom";
-import { useStore } from ".././store/store";
-import { CABINET_WIDTH_OPTIONS } from "../utils/Sidebar/constants";
-import { DEFAULT_CABINET_CONFIG } from "../utils/Sidebar/pricing";
-import { theme } from "../utils/Sidebar/theme";
-import { Icons } from "./Icons";
-import { useSidebarActions } from "../../Module-Cuisine/cuisine/hooks/Sidebar/useSidebarActions";
+import { useStore } from "../../store/store";
+import { CABINET_WIDTH_OPTIONS } from "../../utils/Sidebar/constants";
+import { DEFAULT_CABINET_CONFIG } from "../../utils/Sidebar/pricing";
+import { theme } from "../../utils/Sidebar/theme";
+
+import { Icons } from "../ui/Icons";
+import { useSidebarActions } from "../hooks/Sidebar/useSidebarActions";
 
 // --- COMPOSANT BOUTON FORME PIÈCE (Gardé ici car c'est purement de l'UI) ---
 const RoomShapeBtn = ({ active, onClick, label, children }) => (
