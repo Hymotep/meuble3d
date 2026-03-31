@@ -22,9 +22,13 @@ import {
 	calculateDrawerScales,
 	calculateDoorScale,
 	getZOffsetAndScale,
+	renderPortes,
+	doorAnimation,
+	renderEtagere,
+	renderPenderie,
+	renderTiroirs,
+	drawerAnimation,
 } from "../utils/index.js";
-import { renderPortes, doorAnimation } from "../utils/porteUtils.jsx";
-import { renderEtagere, renderPenderie, renderTiroirs, drawerAnimation } from "../utils/tiroirsUtils.jsx";
 
 // --- SOUS-COMPOSANT : LIGNE DE COTE ---
 const DimensionLine = ({ length, position, rotation, label }) => {

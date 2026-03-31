@@ -7,8 +7,8 @@
  */
 
 import { useState, useMemo } from "react";
-import { calculateCaissonDimensions } from "../../../utils/caissonCalculations.js";
-import { calculateTotalPrice } from "../../../utils/priceCalculation.js"; // À migrer sur le backend plus tard !
+import { calculateCaissonDimensions } from "../../../utils/Caisson/caissonCalculations.js";
+import { calculateTotalPrice } from "../../../utils/Quote/priceCalculation.js";
 import { DEFAULTS, DOOR_CONFIG } from "../../../utils/constants.js";
 
 export const useDressingState = () => {

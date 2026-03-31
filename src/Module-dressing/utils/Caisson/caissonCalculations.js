@@ -8,7 +8,7 @@
  * Utilisé par DressingConfigurator pour générer la disposition des caissons.
  */
 
-import { CAISSON_CONSTANTS, DOOR_CONFIG, CONFIG_WITH_DRAWERS } from "./constants.js";
+import { CAISSON_CONSTANTS, DOOR_CONFIG, CONFIG_WITH_DRAWERS } from "../constants.js";
 
 /**
  * Calcule le nombre de portes et la répartition des caissons

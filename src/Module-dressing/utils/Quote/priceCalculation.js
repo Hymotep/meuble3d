@@ -12,7 +12,7 @@
  * mise à jour automatique du prix lors de chaque modification.
  */
 
-import { getNbTiroirs, hasDrawers } from "./caissonCalculations.js";
+import { getNbTiroirs, hasDrawers } from "../Caisson/caissonCalculations.js";
 
 /**
  * Tarifs de base (en euros)

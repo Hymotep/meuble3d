@@ -10,13 +10,13 @@
 export * from "./constants.js";
 
 // Export des calculs de caissons
-export * from "./caissonCalculations.js";
+export * from "./Caisson/caissonCalculations.js";
 
 // Export du calcul de prix
-export * from "./priceCalculation.js";
+export * from "./Quote/priceCalculation.js";
 
 // Export des presets
-export * from "./presets.js";
+export * from "./Presets/presets.js";
 
 // Export des utilitaires existants (pour compatibilité avec Caisson.jsx)
 export {
@@ -30,8 +30,8 @@ export {
   createMaterial,
   setupTextures,
   getZOffsetAndScale,
-} from "./caissonUtils.js";
+} from "./Caisson/caissonUtils.js";
 
 // Re-export des fonctions de rendu (portes et tiroirs)
-export * from "./porteUtils.jsx";
-export * from "./tiroirsUtils.jsx";
+export * from "./Caisson/porteUtils.jsx";
+export * from "./Caisson/tiroirsUtils.jsx";
