@@ -1,12 +1,21 @@
-import React, { useRef } from "react";
-import { useStore } from "../store/store";
-import { DEFAULT_CABINET_CONFIG } from "../utils/pricing";
-import { CABINET_WIDTH_OPTIONS } from "../utils/constants";
-import { theme } from "../utils/theme";
-import { Icons } from "./Icons";
-import { Link } from "react-router-dom";
+/**
+ * ============================================================================
+ * SIDEBAR COMPONENT
+ * ============================================================================
+ * Interface utilisateur principale pour la configuration de la pièce et
+ * l'ajout de meubles. (Logique extraite dans useSidebarActions).
+ */
 
-// --- COMPOSANT BOUTON FORME PIÈCE ---
+import React, { useRef } from "react";
+import { Link } from "react-router-dom";
+import { useStore } from ".././store/store";
+import { CABINET_WIDTH_OPTIONS } from "../utils/Sidebar/constants";
+import { DEFAULT_CABINET_CONFIG } from "../utils/Sidebar/pricing";
+import { theme } from "../utils/Sidebar/theme";
+import { Icons } from "./Icons";
+import { useSidebarActions } from "../../Module-Cuisine/cuisine/hooks/Sidebar/useSidebarActions";
+
+// --- COMPOSANT BOUTON FORME PIÈCE (Gardé ici car c'est purement de l'UI) ---
 const RoomShapeBtn = ({ active, onClick, label, children }) => (
 	<button
 		onClick={onClick}
@@ -27,369 +36,12 @@ const RoomShapeBtn = ({ active, onClick, label, children }) => (
 	</button>
 );
 
-// --- PRESETS ---
-const PRESETS = {
-	lineaire: {
-		items: (defaultConfig) => [
-			{
-				id: crypto.randomUUID(),
-				type: "window",
-				position: [900, 900, -1450],
-				dimensions: { width: 1000, height: 1000, depth: 100 },
-				rotation: 0,
-				config: defaultConfig,
-			},
-			{
-				id: crypto.randomUUID(),
-				type: "tall_cabinet",
-				position: [-900, 0, -1200],
-				dimensions: { width: 600, height: 2100, depth: 600 },
-				rotation: 0,
-				config: { ...defaultConfig, equipement: "oven_microwave" },
-			},
-			{
-				id: crypto.randomUUID(),
-				type: "base_cabinet",
-				position: [-300, 0, -1200],
-				dimensions: { width: 600, height: 812, depth: 600 },
-				rotation: 0,
-				config: { ...defaultConfig, isTiroirsInterieurs: true },
-			},
-			{
-				id: crypto.randomUUID(),
-				type: "base_cabinet",
-				position: [300, 0, -1200],
-				dimensions: { width: 600, height: 812, depth: 600 },
-				rotation: 0,
-				config: { ...defaultConfig, equipement: "cooktop" },
-			},
-			{
-				id: crypto.randomUUID(),
-				type: "base_cabinet",
-				position: [900, 0, -1200],
-				dimensions: { width: 600, height: 812, depth: 600 },
-				rotation: 0,
-				config: { ...defaultConfig, equipement: "sink" },
-			},
-			{
-				id: crypto.randomUUID(),
-				type: "wall_cabinet",
-				position: [-300, 1400, -1325],
-				dimensions: { width: 600, height: 700, depth: 350 },
-				rotation: 0,
-				config: defaultConfig,
-			},
-			{
-				id: crypto.randomUUID(),
-				type: "wall_cabinet",
-				position: [300, 1400, -1325],
-				dimensions: { width: 600, height: 700, depth: 350 },
-				rotation: 0,
-				config: defaultConfig,
-			},
-		],
-	},
-	L: {
-		items: (defaultConfig) => [
-			{
-				id: crypto.randomUUID(),
-				type: "window",
-				position: [-1950, 900, -600],
-				dimensions: { width: 1000, height: 1000, depth: 100 },
-				rotation: 90,
-				config: defaultConfig,
-			},
-			{
-				id: crypto.randomUUID(),
-				type: "base_cabinet",
-				position: [-1700, 0, -600],
-				dimensions: { width: 600, height: 812, depth: 600 },
-				rotation: 270,
-				config: { ...defaultConfig, equipement: "sink" },
-			},
-			{
-				id: crypto.randomUUID(),
-				type: "base_cabinet",
-				position: [-1700, 0, 0],
-				dimensions: { width: 600, height: 812, depth: 600 },
-				rotation: 270,
-				config: { ...defaultConfig, isTiroirsInterieurs: true },
-			},
-			{
-				id: crypto.randomUUID(),
-				type: "base_cabinet",
-				position: [-1100, 0, -1200],
-				dimensions: { width: 600, height: 812, depth: 600 },
-				rotation: 0,
-				config: { ...defaultConfig, equipement: "cooktop" },
-			},
-			{
-				id: crypto.randomUUID(),
-				type: "base_cabinet",
-				position: [-500, 0, -1200],
-				dimensions: { width: 600, height: 812, depth: 600 },
-				rotation: 0,
-				config: defaultConfig,
-			},
-			{
-				id: crypto.randomUUID(),
-				type: "tall_cabinet",
-				position: [100, 0, -1200],
-				dimensions: { width: 600, height: 2100, depth: 600 },
-				rotation: 0,
-				config: { ...defaultConfig, equipement: "oven_microwave" },
-			},
-		],
-	},
-	U: {
-		items: (defaultConfig) => [
-			{
-				id: crypto.randomUUID(),
-				type: "window",
-				position: [100, 900, -1450],
-				dimensions: { width: 1000, height: 1000, depth: 100 },
-				rotation: 0,
-				config: defaultConfig,
-			},
-			{
-				id: crypto.randomUUID(),
-				type: "base_cabinet",
-				position: [-1700, 0, 0],
-				dimensions: { width: 600, height: 812, depth: 600 },
-				rotation: 270,
-				config: defaultConfig,
-			},
-			{
-				id: crypto.randomUUID(),
-				type: "base_cabinet",
-				position: [-1700, 0, 600],
-				dimensions: { width: 600, height: 812, depth: 600 },
-				rotation: 270,
-				config: { ...defaultConfig, equipement: "sink" },
-			},
-			{
-				id: crypto.randomUUID(),
-				type: "base_cabinet",
-				position: [-1100, 0, -1200],
-				dimensions: { width: 600, height: 812, depth: 600 },
-				rotation: 0,
-				config: { ...defaultConfig, isTiroirsInterieurs: true },
-			},
-			{
-				id: crypto.randomUUID(),
-				type: "base_cabinet",
-				position: [-500, 0, -1200],
-				dimensions: { width: 600, height: 812, depth: 600 },
-				rotation: 0,
-				config: defaultConfig,
-			},
-			{
-				id: crypto.randomUUID(),
-				type: "base_cabinet",
-				position: [100, 0, -1200],
-				dimensions: { width: 600, height: 812, depth: 600 },
-				rotation: 0,
-				config: defaultConfig,
-			},
-			{
-				id: crypto.randomUUID(),
-				type: "base_cabinet",
-				position: [700, 0, -1200],
-				dimensions: { width: 600, height: 812, depth: 600 },
-				rotation: 0,
-				config: { ...defaultConfig, equipement: "cooktop" },
-			},
-			{
-				id: crypto.randomUUID(),
-				type: "base_cabinet",
-				position: [1700, 0, 0],
-				dimensions: { width: 600, height: 812, depth: 600 },
-				rotation: 90,
-				config: defaultConfig,
-			},
-			{
-				id: crypto.randomUUID(),
-				type: "tall_cabinet",
-				position: [1700, 0, 600],
-				dimensions: { width: 600, height: 2100, depth: 600 },
-				rotation: 90,
-				config: { ...defaultConfig, equipement: "oven_microwave" },
-			},
-		],
-	},
-	ilot: {
-		items: (defaultConfig) => [
-			{
-				id: crypto.randomUUID(),
-				type: "window",
-				position: [600, 900, -1450],
-				dimensions: { width: 1000, height: 1000, depth: 100 },
-				rotation: 0,
-				config: defaultConfig,
-			},
-			{
-				id: crypto.randomUUID(),
-				type: "tall_cabinet",
-				position: [-1200, 0, -1200],
-				dimensions: { width: 600, height: 2100, depth: 600 },
-				rotation: 0,
-				config: { ...defaultConfig, equipement: "oven_microwave" },
-			},
-			{
-				id: crypto.randomUUID(),
-				type: "base_cabinet",
-				position: [-600, 0, -1200],
-				dimensions: { width: 600, height: 812, depth: 600 },
-				rotation: 0,
-				config: { ...defaultConfig, isTiroirsInterieurs: true },
-			},
-			{
-				id: crypto.randomUUID(),
-				type: "base_cabinet",
-				position: [0, 0, -1200],
-				dimensions: { width: 600, height: 812, depth: 600 },
-				rotation: 0,
-				config: { ...defaultConfig, equipement: "cooktop" },
-			},
-			{
-				id: crypto.randomUUID(),
-				type: "base_cabinet",
-				position: [600, 0, -1200],
-				dimensions: { width: 600, height: 812, depth: 600 },
-				rotation: 0,
-				config: defaultConfig,
-			},
-			{
-				id: crypto.randomUUID(),
-				type: "tall_cabinet",
-				position: [1200, 0, -1200],
-				dimensions: { width: 600, height: 2100, depth: 600 },
-				rotation: 0,
-				config: defaultConfig,
-			},
-			{
-				id: crypto.randomUUID(),
-				type: "island",
-				position: [0, 0, 200],
-				dimensions: { width: 1800, height: 900, depth: 900 },
-				rotation: 0,
-				config: { ...defaultConfig, equipement: "sink" },
-			},
-		],
-	},
-	parallele: {
-		items: (defaultConfig) => [
-			{
-				id: crypto.randomUUID(),
-				type: "window",
-				position: [0, 900, -1450],
-				dimensions: { width: 1000, height: 1000, depth: 100 },
-				rotation: 0,
-				config: defaultConfig,
-			},
-			{
-				id: crypto.randomUUID(),
-				type: "base_cabinet",
-				position: [-600, 0, -1200],
-				dimensions: { width: 600, height: 812, depth: 600 },
-				rotation: 0,
-				config: { ...defaultConfig, isTiroirsInterieurs: true },
-			},
-			{
-				id: crypto.randomUUID(),
-				type: "base_cabinet",
-				position: [0, 0, -1200],
-				dimensions: { width: 600, height: 812, depth: 600 },
-				rotation: 0,
-				config: { ...defaultConfig, equipement: "cooktop" },
-			},
-			{
-				id: crypto.randomUUID(),
-				type: "base_cabinet",
-				position: [600, 0, -1200],
-				dimensions: { width: 600, height: 812, depth: 600 },
-				rotation: 0,
-				config: defaultConfig,
-			},
-			{
-				id: crypto.randomUUID(),
-				type: "base_cabinet",
-				position: [-600, 0, 0],
-				dimensions: { width: 600, height: 812, depth: 600 },
-				rotation: 180,
-				config: defaultConfig,
-			},
-			{
-				id: crypto.randomUUID(),
-				type: "base_cabinet",
-				position: [0, 0, 0],
-				dimensions: { width: 600, height: 812, depth: 600 },
-				rotation: 180,
-				config: { ...defaultConfig, equipement: "sink" },
-			},
-			{
-				id: crypto.randomUUID(),
-				type: "base_cabinet",
-				position: [600, 0, 0],
-				dimensions: { width: 600, height: 812, depth: 600 },
-				rotation: 180,
-				config: { ...defaultConfig, isTiroirsInterieurs: true },
-			},
-		],
-	},
-	studio: {
-		items: (defaultConfig) => [
-			{
-				id: crypto.randomUUID(),
-				type: "tall_cabinet",
-				position: [-600, 0, -1200],
-				dimensions: { width: 600, height: 2100, depth: 600 },
-				rotation: 0,
-				config: { ...defaultConfig, equipement: "oven_microwave" },
-			},
-			{
-				id: crypto.randomUUID(),
-				type: "base_cabinet",
-				position: [0, 0, -1200],
-				dimensions: { width: 600, height: 812, depth: 600 },
-				rotation: 0,
-				config: { ...defaultConfig, equipement: "sink" },
-			},
-			{
-				id: crypto.randomUUID(),
-				type: "base_cabinet",
-				position: [600, 0, -1200],
-				dimensions: { width: 600, height: 812, depth: 600 },
-				rotation: 0,
-				config: { ...defaultConfig, equipement: "cooktop" },
-			},
-			{
-				id: crypto.randomUUID(),
-				type: "wall_cabinet",
-				position: [0, 1400, -1325],
-				dimensions: { width: 600, height: 700, depth: 350 },
-				rotation: 0,
-				config: defaultConfig,
-			},
-			{
-				id: crypto.randomUUID(),
-				type: "wall_cabinet",
-				position: [600, 1400, -1325],
-				dimensions: { width: 600, height: 700, depth: 350 },
-				rotation: 0,
-				config: defaultConfig,
-			},
-		],
-	},
-};
-
 const Sidebar = () => {
+	// 1. Accès à l'état global (Zustand)
 	const {
 		room,
 		items,
 		updateRoom,
-		addItem,
-		loadState,
 		autoFitWall,
 		activeTab,
 		setActiveTab,
@@ -398,56 +50,13 @@ const Sidebar = () => {
 		selectedId,
 		updateItemDimensions,
 		updateItemConfig,
+		addItem,
 	} = useStore();
 
+	// 2. Fonctions logiques (Custom Hook)
+	const { loadPreset, handleExport, handleImport, generateCabinet, handleEquipmentChange } = useSidebarActions();
+
 	const fileInputRef = useRef(null);
-
-	const loadPreset = (presetName) => {
-		const preset = PRESETS[presetName];
-		if (!preset) return;
-		const presetItems = preset.items(DEFAULT_CABINET_CONFIG);
-		loadState({ room: room, items: presetItems });
-		if (room.wallCount === 1) {
-			setTimeout(() => {
-				useStore.getState().autoFitWall();
-			}, 100);
-		}
-	};
-
-	const handleExport = () => {
-		const itemsToSave = useStore.getState().items;
-		const dataToSave = { room, items: itemsToSave };
-		const jsonString = JSON.stringify(dataToSave, null, 2);
-		const blob = new Blob([jsonString], { type: "application/json" });
-		const url = URL.createObjectURL(blob);
-		const link = document.createElement("a");
-		link.href = url;
-		link.download = "cuisine_projet.json";
-		document.body.appendChild(link);
-		link.click();
-		document.body.removeChild(link);
-		URL.revokeObjectURL(url);
-	};
-
-	const handleImport = (event) => {
-		const file = event.target.files[0];
-		if (!file) return;
-		const reader = new FileReader();
-		reader.onload = (e) => {
-			try {
-				const parsedData = JSON.parse(e.target.result);
-				if (parsedData.room && parsedData.items) {
-					loadState(parsedData);
-				} else {
-					alert("Fichier de cuisine non valide !");
-				}
-			} catch {
-				alert("Erreur de lecture.");
-			}
-		};
-		reader.readAsText(file);
-		event.target.value = null;
-	};
 
 	// --- GESTION DU MODE ÉDITION D'UN MEUBLE ---
 	if (isEditingItem && selectedId) {
@@ -457,19 +66,6 @@ const Sidebar = () => {
 		const isArchitecture = item.type === "window";
 		const getWidthOptions = () =>
 			isArchitecture ? CABINET_WIDTH_OPTIONS.window : item.type === "island" ? CABINET_WIDTH_OPTIONS.island : CABINET_WIDTH_OPTIONS.standard;
-
-		// Fonction pour gérer l'équipement (avec ajustement automatique de la largeur)
-		const handleEquipmentChange = (e) => {
-			const val = e.target.value;
-			updateItemConfig(selectedId, { equipement: val });
-
-			// Si c'est un lave-vaisselle, on ajuste la largeur automatiquement !
-			if (val === "dishwasher_45") {
-				updateItemDimensions(selectedId, { width: 450 });
-			} else if (val === "dishwasher_60") {
-				updateItemDimensions(selectedId, { width: 600 });
-			}
-		};
 
 		return (
 			<div style={theme.panel}>
@@ -546,10 +142,13 @@ const Sidebar = () => {
 								</div>
 							</div>
 
-							{/* --- AJOUT DES OPTIONS LAVE-VAISSELLE --- */}
 							<div style={theme.section}>
 								<label style={theme.label}>Équipement</label>
-								<select value={item.config.equipement || "none"} onChange={handleEquipmentChange} style={theme.select}>
+								<select
+									value={item.config.equipement || "none"}
+									onChange={(e) => handleEquipmentChange(selectedId, e.target.value)}
+									style={theme.select}
+								>
 									{item.type === "tall_cabinet" ? (
 										<>
 											<option value="none">Aucun</option>
@@ -610,15 +209,9 @@ const Sidebar = () => {
 		transition: "all 0.2s",
 	});
 
-	const generateCabinet = (type, dimensions) => {
-		let posY = type === "wall_cabinet" ? 1400 : type === "window" ? 900 : 0;
-		let posZ = type === "window" ? -room.depth / 2 + dimensions.depth / 2 : 0;
-		addItem({ id: crypto.randomUUID(), type, position: [0, posY, posZ], dimensions, config: DEFAULT_CABINET_CONFIG });
-	};
-
 	return (
 		<div style={theme.panel}>
-			{/* Header + Nav vers Dressing */}
+			{/* Header */}
 			<div style={{ ...theme.header, paddingBottom: "12px", borderBottom: "none" }}>
 				<Link
 					to="/dressing"
@@ -631,10 +224,7 @@ const Sidebar = () => {
 						textDecoration: "none",
 						fontWeight: "500",
 						marginBottom: "16px",
-						transition: "color 0.2s",
 					}}
-					onMouseEnter={(e) => (e.currentTarget.style.color = "#111827")}
-					onMouseLeave={(e) => (e.currentTarget.style.color = "#6b7280")}
 				>
 					<Icons.ChevronLeft /> Retour au dressing
 				</Link>
@@ -642,6 +232,7 @@ const Sidebar = () => {
 				<p style={{ ...theme.subtitle, fontSize: "11px", margin: 0, marginBottom: "16px" }}>Configurez votre cuisine sur mesure</p>
 			</div>
 
+			{/* Tabs */}
 			<div style={{ display: "flex", borderBottom: "1px solid #e5e7eb", background: "#fff" }}>
 				<div onClick={() => setActiveTab("room")} style={tabStyle(activeTab === "room")}>
 					Pièce
@@ -655,7 +246,7 @@ const Sidebar = () => {
 			</div>
 
 			<div style={theme.scrollArea}>
-				{/* --- ONGLET PIÈCE --- */}
+				{/* ONGLET PIÈCE */}
 				{activeTab === "room" && (
 					<div style={theme.section}>
 						<div style={{ display: "flex", gap: "8px", marginBottom: "16px", marginTop: "8px" }}>
@@ -719,7 +310,7 @@ const Sidebar = () => {
 					</div>
 				)}
 
-				{/* --- ONGLET MEUBLES --- */}
+				{/* ONGLET MEUBLES */}
 				{activeTab === "catalog" && (
 					<div style={theme.section}>
 						<div style={{ ...theme.grid2, marginTop: "8px" }}>
@@ -769,7 +360,6 @@ const Sidebar = () => {
 						>
 							<Icons.Window /> Ajouter une Fenêtre
 						</button>
-
 						{items.length > 0 && (
 							<button
 								onClick={() => autoFitWall()}
@@ -781,7 +371,7 @@ const Sidebar = () => {
 					</div>
 				)}
 
-				{/* --- ONGLET INSPIRATIONS --- */}
+				{/* ONGLET INSPIRATIONS */}
 				{activeTab === "presets" && (
 					<div style={{ ...theme.section, marginTop: "8px" }}>
 						<div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
@@ -808,7 +398,7 @@ const Sidebar = () => {
 				)}
 			</div>
 
-			{/* Boutons de sauvegarde en bas (Optionnel, mais très pratique pour l'UX) */}
+			{/* Boutons de sauvegarde */}
 			<div style={{ padding: "16px", borderTop: "1px solid #e5e7eb", background: "#fff", display: "flex", gap: "8px" }}>
 				<button onClick={handleExport} style={theme.btnOutline}>
 					<Icons.Save /> Sauvegarder

@@ -14,8 +14,8 @@ import { useThree } from "@react-three/fiber";
 import { useDrag } from "@use-gesture/react";
 import * as THREE from "three";
 import { useStore } from "../../../store/store";
-import { getBBox, getClearanceBBox, doIntersect } from "../../../utils/collision"; // Ajuste le chemin
-import { SNAP_DISTANCE } from "../../../utils/constants";
+import { getBBox, getClearanceBBox, doIntersect } from "../../../utils/KitchenScene/collision"; // Ajuste le chemin
+import { SNAP_DISTANCE } from "../../../utils/Sidebar/constants";
 
 export const useCabinetDrag = ({ id, meshRef, position, dimensions, type, config }) => {
 	const { camera, controls } = useThree();

@@ -8,8 +8,8 @@
 
 import React, { useMemo } from "react";
 import { useStore } from "../store/store";
-import { calculateItemPrice } from "../utils/pricing";
-import { theme } from "../utils/theme";
+import { calculateItemPrice } from "../utils/Sidebar/pricing";
+import { theme } from "../utils/Sidebar/theme";
 import { Icons } from "./Icons";
 
 const DevisPanel = () => {
