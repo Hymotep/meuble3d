@@ -10,12 +10,12 @@
 import React, { useRef } from "react";
 
 // Composants UI & 3D
-import { Sidebar } from "./components/Sidebar.jsx";
-import QuoteBox from "./components/QuoteBox.jsx";
-import BottomBar from "./components/BottomBar.jsx";
-import Scene from "./components/Scene.jsx";
-import Room from "./components/Room.jsx";
-import { Caisson } from "./Caisson.jsx";
+import { Sidebar } from "./bar/Sidebar.jsx";
+import QuoteBox from "./ui/QuoteBox.jsx";
+import BottomBar from "./ui/BottomBar.jsx";
+import Scene from "./scene/Scene.jsx";
+import Room from "./scene/Room.jsx";
+import { Caisson } from "./cabinet/Caisson.jsx";
 
 // Hook logique
 import { useDressingState } from "./hooks/DressingConfigurator/useDressingState.js";

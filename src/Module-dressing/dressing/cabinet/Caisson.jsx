@@ -11,7 +11,7 @@ import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 
 // Import du Hook local
-import { useCaissonMaterials } from "./hooks//Caisson/useCaissonMaterials.js";
+import { useCaissonMaterials } from "../hooks/Caisson/useCaissonMaterials.js";
 
 // Import des utilitaires
 import {
@@ -28,7 +28,7 @@ import {
 	renderPenderie,
 	renderTiroirs,
 	drawerAnimation,
-} from "../utils/index.js";
+} from "../../utils/index.js";
 
 // --- SOUS-COMPOSANT : LIGNE DE COTE ---
 const DimensionLine = ({ length, position, rotation, label }) => {

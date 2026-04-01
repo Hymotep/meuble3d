@@ -1,6 +1,6 @@
 import React from "react";
 import { theme } from "../theme.js";
-import { Icons } from "./Icons.jsx";
+import { Icons } from "../ui/Icons.jsx";
 import { PRESETS, getPresetByType } from "../../utils/Presets/presets.js";
 import { DIMENSION_LIMITS } from "../../utils/constants.js";
 import { Link } from "react-router-dom";

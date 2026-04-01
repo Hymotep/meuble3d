@@ -215,7 +215,7 @@ const Sidebar = () => {
 			{/* Header */}
 			<div style={{ ...theme.header, paddingBottom: "12px", borderBottom: "none" }}>
 				<Link
-					to="/dressing"
+					to="/"
 					style={{
 						display: "inline-flex",
 						alignItems: "center",
